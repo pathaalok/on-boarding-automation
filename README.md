@@ -10,6 +10,8 @@ Admin Server (localhost:9000)
 
 Client App (localhost:8081)
 
+Config Repo (https://github.com/pathaalok/config-repo)
+
 Ai-Agent:
 
 pip install -r requirements.txt
