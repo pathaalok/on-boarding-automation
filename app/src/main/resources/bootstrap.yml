@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: client-app
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      uri: http://localhost:8888
+      label: main  # Default branch, override using System.setProperty or env var

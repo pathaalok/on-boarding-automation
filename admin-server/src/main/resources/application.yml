@@ -1,0 +1,16 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: admin-server
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+spring.boot.admin:
+  ui:
+    title: Spring Boot Admin Server

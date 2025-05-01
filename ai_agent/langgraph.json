@@ -1,0 +1,14 @@
+{
+  "dockerfile_lines": [],
+  "graphs": {
+    
+    "on_boarding_graph": "./on-boarding.py:graph",
+    "simple_graph": "./simple.py:graph"
+  
+  },
+  "env": "./.env",
+  "python_version": "3.11",
+  "dependencies": [
+    "."
+  ]
+}

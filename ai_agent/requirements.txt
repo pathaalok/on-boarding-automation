@@ -1,0 +1,10 @@
+langgraph
+langgraph-prebuilt
+langgraph-sdk
+langsmith
+langchain-community
+langchain-core
+langchain-openai
+langgraph-cli[inmem]
+PyGithub
+python-dotenv

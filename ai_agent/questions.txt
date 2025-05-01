@@ -1,0 +1,4 @@
+Partition
+Eligible SOR Codes (Example: ACCT/SOR,DEAL/SOR)
+BUS UNIT 
+RCC RULES
