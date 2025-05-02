@@ -49,7 +49,7 @@ initial_state: QAState = {
 # --- GitHub Setup ---
 g = Github(os.getenv("GITHUB_TOKEN"))
 repo = g.get_repo(os.getenv("GITHUB_REPO"))
-app_conf_change_url = os.getenv("APPLICATION_CONFIG_CHANGE_URL") 
+app_conf_change_url = g.get_repo(os.getenv("APPLICATION_CONFIG_CHANGE_URL"))
 
 # --- GitHub Helpers ---
 def check_if_branch_exists(branch_name: str) -> bool:
@@ -231,9 +231,8 @@ def update_sor_codes_yaml(state: QAState) -> QAState:
         return state
 
     system_prompt = f"""
-        You are an expert onboarding assistant. You are provided with a Acct,Deal SOR configurations.
+        You are an expert onboarding assistant. You are provided with a Acct and Deal SOR configuration that contains account Acct and DEAL SOR values.
         You must:
-        - extract only the SOR from given input format  (Acct/SOR or Deal/SOR) check case sensitive
         - Check whether a given SOR is present in Acct or DEAL respectively.
         - If not present, update it in the respective section.
         - Do not create any new sections
@@ -276,9 +275,8 @@ def update_rules_yaml(state: QAState) -> QAState:
             P1 to P4 are non Regulated
         
         You must:
-        - Check whether a given key input for that section is already present if yes dont do any action
+        - Check whether a given input is already present.
         - If not present, update it in the respective section based on input data provided
-        - key for each section should not contain duplicate
         - Maintain the structure and return the updated YAML.
         
         \n\n{state["rules_content"]}
