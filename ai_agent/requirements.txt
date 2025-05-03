@@ -8,3 +8,5 @@ langchain-openai
 langgraph-cli[inmem]
 PyGithub
 python-dotenv
+fastapi
+uvicorn

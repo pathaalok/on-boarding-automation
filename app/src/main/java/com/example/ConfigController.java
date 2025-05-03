@@ -23,7 +23,10 @@ public class ConfigController {
     private String greeting1;
 
     @Autowired
-    private AppConfigProperties configProperties;
+    private SorCodeProperties sorCodeProperties;
+
+    @Autowired
+    private RulesProperties rulesProperties;
 
     @Autowired
     private RefreshEndpoint refreshEndpoint;
@@ -33,9 +36,19 @@ public class ConfigController {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @GetMapping("/config-greeting")
-    public List<String> getGreeting() {
-        return Arrays.asList(greeting1,configProperties.getGreeting());
+    @GetMapping("/config")
+    public Map getConfig() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("rules", Map.of(
+                "Inv_ref_id_rccRule", rulesProperties.getInv_ref_id_rccRule(),
+                "Non_regulated_rccRule", rulesProperties.getNon_regulated_rccRule(),
+                "Non_regulated_inv_ref_id_rccRule", rulesProperties.getNon_regulated_inv_ref_id_rccRule()
+        ));
+        result.put("sorCodes", Map.of(
+                "Acct", sorCodeProperties.getAcct(),
+                "DEAL", sorCodeProperties.getDEAL()
+        ));
+        return result;
     }
 
     @PostMapping("/change-branch")

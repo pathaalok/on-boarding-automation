@@ -2,11 +2,12 @@ server:
   port: 8081
 
 spring:
+  profiles:
+    include: rules,sor-codes
   boot:
     admin:
       client:
         url: http://localhost:9000
-
 
 management:
   endpoints:
