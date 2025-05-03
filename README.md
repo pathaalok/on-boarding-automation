@@ -1,8 +1,22 @@
 # on-boarding-automation
 
+
+
+----------------------------------------------------
+Inside Ai-Agent folder
+
+pip install -r requirements.txt
+
+Add Keys in .env for below
+
+GITHUB_TOKEN
+OPENAI_API_KEY
+LANGSMITH_API_KEY
+
+----------------------------------------------------
 Java Services:
 
-Start all services in order:
+Start all services in order: 
 
 Config Server (localhost:8888)
 
@@ -12,24 +26,12 @@ Client App (localhost:8081)
 
 Config Repo (https://github.com/pathaalok/config-repo)
 
-Ai-Agent:
+----------------------------------------------------
+Python Service:
 
-pip install -r requirements.txt
+uvicorn main:app --reload
 
-Add values for below in .env
-
-GITHUB_TOKEN
-OPENAI_API_KEY
-LANGSMITH_API_KEY
+API SPEC:
 
 
-```
-langgraph dev
-```
 
-You should see the following output:
-```
-- 🚀 API: http://127.0.0.1:2024
-- 🎨 Studio UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
-- 📚 API Docs: http://127.0.0.1:2024/docs
-```
