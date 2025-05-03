@@ -1,0 +1,6 @@
+rules:
+  non_regulated_rccRule: #COUNTRY|LOB|TYPE|DOC_CAT|DOC_TYPE
+    "[US|LOB1|ACCT|11|11]": AlRCC
+  inv_ref_id_rccRule: #COUNTRY|INV_REF
+    "[US|123]": AlRCC
+  non_regulated_inv_ref_id_rccRule: #COUNTRY|INV_REF
