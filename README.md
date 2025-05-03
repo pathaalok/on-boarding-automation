@@ -33,5 +33,25 @@ uvicorn main:app --reload
 
 API SPEC:
 
+API:
+http://127.0.0.1:8000/questionare
+
+REQ: 
+{
+    "base_branch": "main",
+    "new_branch": "new-onboarding",
+    "questions": [
+        "Partition",
+        "Eligible SOR Codes (Example: ACCT/SOR,DEAL/SOR)",
+        "BUS UNIT",
+        "RCC RULES"
+    ],
+    "answers": {
+        "0": "P2",
+        "1": "Acct/sor1,DEAL/sor2",
+        "2": "Test",
+        "3": "COUNTRY,LOB,TYPE,DOC_CAT,DOC_TYPE,INV_REF,RCC CN,LOB1,ACCT,1,12,AlRCC US,LOB1,DEAL,1,,Al1RCCUS,,,,143,Al1RCC"
+    }
+}
 
 
