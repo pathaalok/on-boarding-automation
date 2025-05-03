@@ -1,18 +1,37 @@
 plugins {
-	id 'org.springframework.boot' version '3.1.0'
+	id 'org.springframework.boot' version '3.2.5'
 	id 'io.spring.dependency-management' version '1.1.0'
 	id 'java'
 }
 
 group = 'com.example'
-version = '1.0.0'
+version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
-
-dependencies {
-	implementation 'de.codecentric:spring-boot-admin-starter-server:3.1.0'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-}
 
 repositories {
 	mavenCentral()
+}
+
+ext {
+	set('springCloudVersion', "2023.0.1") // ✅ Compatible with Spring Boot 3.2.x
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'de.codecentric:spring-boot-admin-server:3.1.5'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
 }

@@ -1,16 +1,33 @@
 server:
   port: 9000
 
+
 spring:
   application:
     name: admin-server
+  boot:
+    admin:
+      client:
+        enabled: false
+      server:
+        enabled: true
+
+  security:
+    user:
+      name: admin
+      password: adminpassword
+
+  config:
+    import: "configserver:"
+    uri: http://localhost:8888
 
 management:
+  endpoint:
+    instances:
+      enabled: true
+
   endpoints:
     web:
       exposure:
-        include: "*"
-
-spring.boot.admin:
-  ui:
-    title: Spring Boot Admin Server
+        exclude: "*"
+        include: health,info,instances
