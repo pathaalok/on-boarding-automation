@@ -1,0 +1,5 @@
+spring:
+  profiles:
+    active: dev
+info:
+  message: "Shared config for all apps"
