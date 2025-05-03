@@ -49,7 +49,8 @@ initial_state: QAState = {
 # --- GitHub Setup ---
 g = Github(os.getenv("GITHUB_TOKEN"))
 repo = g.get_repo(os.getenv("GITHUB_REPO"))
-app_conf_change_url = os.getenv("APPLICATION_CONFIG_CHANGE_URL") 
+app_admin_service_url = os.getenv("APP_ADMIN_SERVICE_URL") 
+app_service_name = os.getenv("APP_SERVICE_NAME") 
 
 # --- GitHub Helpers ---
 def check_if_branch_exists(branch_name: str) -> bool:
@@ -304,18 +305,58 @@ def create_pr_node(state: QAState) -> QAState:
     create_pull_request(branch_name,target_branch)
     return state
 
+def call_api_to_app(state: QAState,app_url : str):
+    
+    branch_name = state["branch_name"]
+    app_total_url = f"{app_url}/change-branch?branch={branch_name}"
+    try:
+        response = requests.post(app_total_url, None)
+        response.raise_for_status()
+        print(f"API call {app_total_url} successful: {response.status_code}")
+    except Exception as e:
+        print(f"API call {app_total_url} failed: {e}")
+
+from requests.auth import HTTPBasicAuth
+
 def call_api_to_update_config(state: QAState) -> QAState:
     if state.get("abort"):
         return state
 
+    admin_url = f"{app_admin_service_url}/instances"
+    print("admin_url:", admin_url)
+
     try:
-        response = requests.post(app_conf_change_url+state["branch_name"], None)
+        # Add basic authentication credentials
+        response = requests.get(
+            admin_url,
+            auth=HTTPBasicAuth("admin", "adminpassword")  
+        )
         response.raise_for_status()
-        print(f"API call successful: {response.status_code}")
+        instances = response.json()
+        print("instances:", instances)
+
+        # Extract service URLs for matching appName
+        matching_urls = [
+            registration["serviceUrl"]
+            for instance in instances
+            if (registration := instance.get("registration"))
+            and registration.get("name", "").lower() == app_service_name.lower()
+        ]
+
+        print("Matching instance URLs:", matching_urls)
+
+        for url in matching_urls:
+            try:
+                call_api_to_app(state, url)
+                print(f"Successfully notified {url}")
+            except Exception as notify_err:
+                print(f"Failed to notify {url}: {notify_err}")
+
     except Exception as e:
-        print(f"API call failed: {e}")
+        print(f"Error fetching instances: {e}")
 
     return state
+
 
 # --- LangGraph Flow ---
 def get_next_node(state: QAState) -> str:
@@ -370,6 +411,8 @@ graph.add_conditional_edges(
 )
 
 # Submit Chain
+
+
 graph.add_edge("create_target_branch", "create_on_boarding_branch")
 graph.add_edge("create_on_boarding_branch", "fetch_sorCodes")
 graph.add_edge("fetch_sorCodes", "update_sor_codes_yaml")
