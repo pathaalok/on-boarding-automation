@@ -1,0 +1,65 @@
+<div class="event-container">
+    <div class="event" *ngFor="let event of events">
+        {{ event }}
+    </div>
+</div>
+
+
+<mat-horizontal-stepper linear>
+    <mat-step [stepControl]="firstFormGroup">
+      <form [formGroup]="firstFormGroup">
+        <ng-template matStepLabel>Questionnaire</ng-template>
+  
+        <mat-form-field appearance="fill" class="wf-field">
+          <mat-label>Partition</mat-label>
+          <textarea matInput formControlName="partition"></textarea>
+        </mat-form-field>
+  
+        <mat-form-field appearance="fill" class="wf-field">
+          <mat-label>Eligible SOR Codes (Example: ACCT/SOR_CODE,DEAL/SOR_CODE)</mat-label>
+          <textarea matInput formControlName="sorCodes"></textarea>
+        </mat-form-field>
+  
+        <mat-form-field appearance="fill" class="wf-field">
+          <mat-label>BUS UNIT</mat-label>
+          <textarea matInput formControlName="busUnit"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="wf-field">
+            <mat-label>RCC Rules</mat-label>
+            <textarea matInput formControlName="rccRules"></textarea>
+          </mat-form-field>
+  
+        <div>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </form>
+    </mat-step>
+  
+    <mat-step [stepControl]="secondFormGroup">
+      <form [formGroup]="secondFormGroup">
+        <ng-template matStepLabel>Branch Details</ng-template>
+
+        <mat-form-field appearance="fill" class="wf-field">
+            <mat-label>JIRA No</mat-label>
+            <textarea matInput formControlName="jiraNo"></textarea>
+          </mat-form-field>
+
+        <mat-form-field appearance="fill" class="wf-field">
+          <mat-label>Base Branch Name</mat-label>
+          <textarea matInput formControlName="baseBranch"></textarea>
+        </mat-form-field>
+  
+        <mat-form-field appearance="fill" class="wf-field">
+          <mat-label>New On-boaring Branch Name</mat-label>
+          <textarea matInput formControlName="newBranch"></textarea>
+        </mat-form-field>
+  
+        <div>
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button [disabled]="firstFormGroup.invalid || secondFormGroup.invalid" color="primary" (click)="submit();">Submit</button>
+        </div>
+      </form>
+    </mat-step>
+  </mat-horizontal-stepper>
+  

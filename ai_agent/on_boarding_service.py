@@ -7,6 +7,7 @@ import re
 from openai import OpenAI
 import requests
 from requests.auth import HTTPBasicAuth
+import asyncio
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +20,7 @@ class QAState(TypedDict):
     command: str
     branch_name: str
     base_branch: str
+    jira_no: str
     sor_codes_content: str
     updated_sor_codes: str
     rules_content: str
@@ -38,6 +40,26 @@ app_service_name = os.getenv("APP_SERVICE_NAME")
 sor_code_file = os.getenv("SOR_CODES_YML") 
 rule_file = os.getenv("RULES_YML") 
 
+# Queue for SSE
+event_queue = asyncio.Queue() 
+
+async def event_stream():
+    while True:
+        data = await event_queue.get()
+        yield f"data: {data}\n\n"
+        event_queue.task_done()
+
+async def notify(message):
+    await event_queue.put(message)
+
+def stream_message_to_ui(message: str):
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(notify(message))
+    except RuntimeError:
+        # Fallback if not in an event loop (e.g., running in sync context)
+        asyncio.run(notify(message))
+
 # --- GitHub Helpers ---
 def check_if_branch_exists(branch_name: str) -> bool:
     try:
@@ -56,8 +78,10 @@ def create_base_branch_if_not_exists(state: QAState) -> str:
         default_branch = repo.get_branch(repo.default_branch)
         repo.create_git_ref(ref=f"refs/heads/{base_branch}", sha=default_branch.commit.sha)
         print(f"Created base branch: {base_branch}")
+        stream_message_to_ui(f"Created base branch: {base_branch}")
     else:
         print(f"base branch '{base_branch}' already exists.")
+        stream_message_to_ui(f"base branch '{base_branch}' already exists.")
     return base_branch
 
 def create_on_boarding_branch_if_not_exists(state: QAState,base_branch: str) -> str:
@@ -67,8 +91,10 @@ def create_on_boarding_branch_if_not_exists(state: QAState,base_branch: str) -> 
         base_branch_1 = repo.get_branch(base_branch)
         repo.create_git_ref(ref=f"refs/heads/{new_branch_name}", sha=base_branch_1.commit.sha)
         print(f"Created on-boarding branch: {new_branch_name} from {base_branch}")
+        stream_message_to_ui(f"Created on-boarding branch: {new_branch_name} from {base_branch}")
     else:
         print(f"Branch '{new_branch_name}' already exists.")
+        stream_message_to_ui(f"Branch '{new_branch_name}' already exists.")
     return new_branch_name
 
 def check_if_pr_exists(new_branch_name: str,base_branch :str) -> bool:
@@ -79,9 +105,9 @@ def check_if_pr_exists(new_branch_name: str,base_branch :str) -> bool:
             return True
     return False
 
-def create_pull_request(new_branch_name: str,base_branch: str):
-    pr_title = "Submit On-boarding Details"
-    pr_body = "This pull request contains the onboarding details."
+def create_pull_request(new_branch_name: str,base_branch: str,jira_no: str):
+    pr_title = f"{jira_no} Submit On-boarding Details"
+    pr_body = f"Pull request contains the onboarding details for {jira_no}"
     print(f"base branch '{base_branch}'")
     if not check_if_pr_exists(new_branch_name,base_branch):
         pr = repo.create_pull(
@@ -91,8 +117,10 @@ def create_pull_request(new_branch_name: str,base_branch: str):
             base=base_branch
         )
         print(f"Created PR: {pr.html_url}")
+        stream_message_to_ui(f"Created PR: {pr.html_url}")
     else:
         print(f"Skipping PR creation because one already exists.")
+        stream_message_to_ui(f"Skipping PR creation because one already exists.")
 
 # --- File Helpers ---
 def fetch_content(branch_name: str,file_path: str) -> str:
@@ -103,13 +131,14 @@ def fetch_content(branch_name: str,file_path: str) -> str:
         print(f"Error fetching onboarding file: {e}")
         return ""
 
-def update_or_create_file(updated_content: str, branch_name: str,file_path:str):
-    commit_message = f"Update {file_path} with LLM-generated content"
+def update_or_create_file(updated_content: str, branch_name: str,file_path:str,jira_no:str):
+    commit_message = f"{jira_no} Update {file_path} with LLM-generated content"
     try:
         file = repo.get_contents(file_path, ref=branch_name)
         file_sha = file.sha
         repo.update_file(file_path, commit_message, updated_content, file_sha, branch=branch_name)
         print(f"Updated {file_path} in branch {branch_name}")
+        stream_message_to_ui(f"Updated {file_path} in branch {branch_name}")
     except Exception as e:
         print(f"Error updating {file_path}: {e}")
 
@@ -155,7 +184,8 @@ def fetch_sor_codes(state: QAState) -> QAState:
     branch_name = state.get("branch_name")
     sor_codes_content = fetch_content(branch_name,sor_code_file)
     if not sor_codes_content:
-        print("Failed to fetch onboarding.yml.")
+        print(f"Failed to fetch {sor_code_file}")
+        stream_message_to_ui(f"Failed to fetch {sor_code_file}")
         state["abort"] = True
     else:
         state["sor_codes_content"] = sor_codes_content
@@ -176,20 +206,22 @@ def call_llm_for_sor_codes(state: QAState) -> QAState:
     """
     user_prompt = build_user_prompt(state)
     updated_sor_codes = call_openai(system_prompt, user_prompt)
-    print(f"Generated updated_sor_codes YAML.")
+    print(f"updated_sor_codes YAML.")
+    stream_message_to_ui(f"updated sor_codes YAML from LLM.")
     state["updated_sor_codes"] = updated_sor_codes
     return state
 
 def update_sor_codes_file_node(state: QAState) -> QAState:
     branch_name = state.get("branch_name")
-    update_or_create_file(state["updated_sor_codes"], branch_name,sor_code_file)
+    update_or_create_file(state["updated_sor_codes"], branch_name,sor_code_file,state["jira_no"])
     return state
 
 def fetch_rules(state: QAState) -> QAState:
     branch_name = state.get("branch_name")
     rules_content = fetch_content(branch_name,rule_file)
     if not rules_content:
-        print("Failed to fetch rules.yml.")
+        print(f"Failed to fetch {rule_file}")
+        stream_message_to_ui(f"Failed to fetch {rule_file}")
         state["abort"] = True
     else:
         state["rules_content"] = rules_content
@@ -214,31 +246,35 @@ def call_llm_for_rules(state: QAState) -> QAState:
     """
     user_prompt = build_user_prompt(state)
     updated_rules = call_openai(system_prompt, user_prompt)
-    print(f"Generated updated_rules YAML.")
+    print(" updated_rules YAML.")
+    stream_message_to_ui(" updated rules YAML from LLM.")
     state["updated_rules"] = updated_rules
     return state
 
 def update_rules_file_node(state: QAState) -> QAState: 
     branch_name = state.get("branch_name")
-    update_or_create_file(state["updated_rules"], branch_name,rule_file)
+    update_or_create_file(state["updated_rules"], branch_name,rule_file,state["jira_no"])
     return state
 
 def create_pr_node(state: QAState) -> QAState:
     branch_name = state.get("branch_name")
     base_branch = state.get("base_branch")
-    create_pull_request(branch_name,base_branch)
+    jira_no = state.get("jira_no")
+    create_pull_request(branch_name,base_branch,jira_no)
     return state
 
 def call_api_to_app(state: QAState,app_url : str):
     
     branch_name = state["branch_name"]
-    app_total_url = f"{app_url}/change-branch?branch={branch_name}"
+    app_total_url = f"{app_url}change-branch?branch={branch_name}"
     try:
         response = requests.post(app_total_url, None)
         response.raise_for_status()
         print(f"API call {app_total_url} successful: {response.status_code}")
+        stream_message_to_ui(f"updated new config in {app_url} from branch {branch_name}")
     except Exception as e:
         print(f"API call {app_total_url} failed: {e}")
+        stream_message_to_ui(f"API call {app_total_url} failed")
 
 def call_api_to_update_config(state: QAState) -> QAState:
 
@@ -253,7 +289,6 @@ def call_api_to_update_config(state: QAState) -> QAState:
         )
         response.raise_for_status()
         instances = response.json()
-        print("instances:", instances)
 
         # Extract service URLs for matching appName
         matching_urls = [
@@ -271,6 +306,7 @@ def call_api_to_update_config(state: QAState) -> QAState:
                 print(f"Successfully notified {url}")
             except Exception as notify_err:
                 print(f"Failed to notify {url}: {notify_err}")
+                stream_message_to_ui(f"Failed to notify {url}")
 
     except Exception as e:
         print(f"Error fetching instances: {e}")
@@ -306,6 +342,7 @@ graph.add_edge(START, "create_base_branch")
 # Submit Chain
 
 graph.add_edge("create_base_branch", "create_on_boarding_branch")
+
 graph.add_edge("create_on_boarding_branch", "fetch_sor_codes")
 graph.add_edge("fetch_sor_codes", "call_llm_for_sor_codes")
 graph.add_edge("call_llm_for_sor_codes", "update_sor_codes_file")
@@ -313,6 +350,11 @@ graph.add_edge("call_llm_for_sor_codes", "update_sor_codes_file")
 graph.add_edge("update_sor_codes_file", "fetch_rules")
 graph.add_edge("fetch_rules", "call_llm_for_rules")
 graph.add_edge("call_llm_for_rules", "update_rules_file")
+
+# enable this without LLM call just to test flow
+# graph.add_edge("create_on_boarding_branch", "fetch_rules")
+# graph.add_edge("fetch_rules", "update_rules_file")
+# enable this without LLM call just to test flow
 
 graph.add_edge("update_rules_file", "create_pr")
 graph.add_edge("create_pr", "call_api_to_update_config")
