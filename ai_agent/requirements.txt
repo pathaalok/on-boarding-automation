@@ -10,3 +10,4 @@ PyGithub
 python-dotenv
 fastapi
 uvicorn
+google-generativeai

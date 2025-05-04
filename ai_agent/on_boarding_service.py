@@ -8,6 +8,7 @@ from openai import OpenAI
 import requests
 from requests.auth import HTTPBasicAuth
 import asyncio
+import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()
@@ -27,9 +28,11 @@ class QAState(TypedDict):
     updated_rules: str
     abort: bool
 
+model = os.getenv("MODEL")
+
 # Set OpenAI API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # --- GitHub Setup ---
 g = Github(os.getenv("GITHUB_TOKEN"))
@@ -142,6 +145,7 @@ def update_or_create_file(updated_content: str, branch_name: str,file_path:str,j
     except Exception as e:
         print(f"Error updating {file_path}: {e}")
 
+
 def extract_yaml_content(text: str) -> str:
     yaml_match = re.search(r"```yaml(.*?)```", text, re.DOTALL)
     if yaml_match:
@@ -149,11 +153,9 @@ def extract_yaml_content(text: str) -> str:
     else:
         return text.strip()
 
-# --- LLM Helpers ---
+# --- OPEN AI LLM Helpers ---
 def call_openai(system_prompt: str, user_prompt: str) -> str:
-    # print(f"system_prompt {system_prompt}")
-    # print(f"user_prompt {user_prompt}")
-
+   
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -165,8 +167,30 @@ def call_openai(system_prompt: str, user_prompt: str) -> str:
     yaml_content = extract_yaml_content(raw_content)
     return yaml_content
 
+# --- GEMINI AI LLM Helpers ---
+
+def call_gemini(system_prompt: str, user_prompt: str) -> str:
+   
+    full_prompt = f"{system_prompt.strip()}\n\n{user_prompt.strip()}"
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+
+    response = model.generate_content(full_prompt)
+    return extract_yaml_content(response.text)
+
+# --- LLM Helpers ---
+def call_ai_model(system_prompt: str, user_prompt: str) -> str:
+    # print(f"system_prompt {system_prompt}")
+    # print(f"user_prompt {user_prompt}")
+
+    if model == "GEMINI":
+        return call_gemini(system_prompt,user_prompt)
+    else:
+        return call_openai(system_prompt,user_prompt)
+
+
 def build_user_prompt(state: QAState) -> str:
-    prompt_parts = []
+    prompt_parts = ["INPUT DATA : "]
     for i, question in enumerate(state["questions"]):
         answer = state["answers"].get(i, "(no answer)")
         prompt_parts.append(f"Q{i+1}: {question}\nA{i+1}: {answer}")
@@ -196,18 +220,18 @@ def call_llm_for_sor_codes(state: QAState) -> QAState:
     system_prompt = f"""
         You are an expert onboarding assistant. You are provided with a Acct,Deal SOR configurations.
         You must:
-        - extract only the SOR from given input format  (Acct/SOR or Deal/SOR) check case sensitive
+        - extract only the SOR from given input format ACCT/SOR_CODE,DEAL/SOR_CODE check case in-sensitive
         - Check whether a given SOR is present in Acct or DEAL respectively.
-        - If not present, update it in the respective section.
-        - Do not create any new sections
+        - If not present, update it in the respective section
+        - Do not add any new sections from Input Data
         - Maintain the structure and return the updated YAML.
          
         \n\n{state["sor_codes_content"]}
     """
     user_prompt = build_user_prompt(state)
-    updated_sor_codes = call_openai(system_prompt, user_prompt)
+    updated_sor_codes = call_ai_model(system_prompt, user_prompt)
     print(f"updated_sor_codes YAML.")
-    stream_message_to_ui(f"updated sor_codes YAML from LLM.")
+    stream_message_to_ui(f"updated sor_codes from AI Model.")
     state["updated_sor_codes"] = updated_sor_codes
     return state
 
@@ -238,16 +262,17 @@ def call_llm_for_rules(state: QAState) -> QAState:
         
         You must:
         - Check whether a given key input for that section is already present if yes dont do any action
-        - If not present, update it in the respective section based on input data provided
+        - If not present, update it in the respective section which are more matched with columns based on input data provided 
+        - Do not add any new sections from Input Data
         - key for each section should not contain duplicate
         - Maintain the structure and return the updated YAML.
         
         \n\n{state["rules_content"]}
     """
     user_prompt = build_user_prompt(state)
-    updated_rules = call_openai(system_prompt, user_prompt)
+    updated_rules = call_ai_model(system_prompt, user_prompt)
     print(" updated_rules YAML.")
-    stream_message_to_ui(" updated rules YAML from LLM.")
+    stream_message_to_ui(" updated rules YAML from AI Model.")
     state["updated_rules"] = updated_rules
     return state
 
