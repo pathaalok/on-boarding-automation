@@ -12,9 +12,13 @@ Design :
 Technologies Used
 
 Python + Lang Graph
+
 Spring Config Server
+
 Spring boot Admin
+
 Spring boot Client App
+
 Angular UI
 
 ----------------------------------------------------
