@@ -1,9 +1,12 @@
 # on-boarding-automation
 
+This Repo is POC for automation of on boarding
+
 ---------------------------------------------------
 Design :
 
 ![on_boarding_automation drawio](https://github.com/user-attachments/assets/2d66f967-c4c8-448f-a747-f6fe33a1839f)
+
 ----------------------------------------------------
 Inside Ai-Agent folder
 
