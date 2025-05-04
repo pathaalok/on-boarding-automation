@@ -1,4 +1,5 @@
-<div class="event-container">
+<div class="event-container" *ngIf="events.length>0">
+    <div class="event" > <label (click)="events=[];">X</label></div>
     <div class="event" *ngFor="let event of events">
         {{ event }}
     </div>
@@ -72,10 +73,6 @@
                 <input type="text" matInput formControlName="newBranch"/>
               </mat-form-field>
         </div>
-
-       
-  
-        
   
         <div style="float: right;">
           <button mat-button matStepperPrevious>Back</button>

@@ -28,7 +28,7 @@ export class WfStepperComponent implements OnInit {
 
   firstFormGroup!: FormGroup;
   secondFormGroup!: FormGroup;
-  events:any = [];
+  events:any = ["Test123","Test123 Test123","tete tete tete tete tete tete "];
   submitAction: boolean =false;
 
   constructor(private fb: FormBuilder,private http: HttpClient,private eventStreamService: EventStreamService) {}

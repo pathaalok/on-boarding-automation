@@ -34,12 +34,16 @@
   }
   
   .event-container{
+    position: absolute;
+    width: 50%;
+    right: 0px;
+    z-index: 1;
     text-align: end;
-    font-size: 18px;
+    font-size: 10px;
     font-weight: 500;
     background: aliceblue;
   }
 
   .event{
-    padding: 8px 8px;
+    padding: 2px 8px;
   }
