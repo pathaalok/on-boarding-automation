@@ -2,14 +2,8 @@
 
 This Repo is POC for automation of on boarding
 
----------------------------------------------------
-Design :
-
-![on_boarding_automation drawio](https://github.com/user-attachments/assets/2d66f967-c4c8-448f-a747-f6fe33a1839f)
-
-----------------------------------------------------
-
 Technologies Used
+-----------------
 
 Python + Lang Graph
 
@@ -21,7 +15,16 @@ Spring boot Client App
 
 Angular UI
 
+---------------------------------------------------
+Design :
+-
+![on_boarding_automation drawio](https://github.com/user-attachments/assets/2d66f967-c4c8-448f-a747-f6fe33a1839f)
+
 ----------------------------------------------------
+
+Set Up:
+-
+
 Inside Ai-Agent folder
 
 pip install -r requirements.txt
