@@ -18,6 +18,10 @@ GITHUB_TOKEN
 OPENAI_API_KEY
 LANGSMITH_API_KEY
 
+Python Service:
+
+uvicorn main:app --reload
+
 ----------------------------------------------------
 Java Services:
 
@@ -30,11 +34,6 @@ Admin Server (localhost:9000)
 Client App (localhost:8081)
 
 Config Repo (https://github.com/pathaalok/config-repo)
-
-----------------------------------------------------
-Python Service:
-
-uvicorn main:app --reload
 
 ----------------------------------------------------
 Angular UI:
@@ -51,7 +50,7 @@ Initial Screen:
 ![image](https://github.com/user-attachments/assets/bfc4f18d-69eb-40e6-af49-58bda4019f6b)
 
 
-On Successfull submission:
+On submission events will be displayed in real time:
 ![image](https://github.com/user-attachments/assets/de09e8b5-11dd-4722-8bcb-1d51c1bb8935)
 
 
