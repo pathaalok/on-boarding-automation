@@ -8,6 +8,16 @@ Design :
 ![on_boarding_automation drawio](https://github.com/user-attachments/assets/2d66f967-c4c8-448f-a747-f6fe33a1839f)
 
 ----------------------------------------------------
+
+Technologies Used
+
+Python + Lang Graph
+Spring Config Server
+Spring boot Admin
+Spring boot Client App
+Angular UI
+
+----------------------------------------------------
 Inside Ai-Agent folder
 
 pip install -r requirements.txt
