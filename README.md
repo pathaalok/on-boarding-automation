@@ -1,4 +1,4 @@
-# on-boarding-automation
+# On-Boarding-Automation
 
 This Repo is POC for automation of on boarding
 
