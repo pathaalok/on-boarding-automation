@@ -36,27 +36,22 @@ Python Service:
 
 uvicorn main:app --reload
 
-API SPEC:
+----------------------------------------------------
+Angular UI:
 
-API:
-http://127.0.0.1:8000/questionare
+Inside on-boarding-ui in cmd run:
 
-REQ: 
-{
-    "base_branch": "main",
-    "new_branch": "new-onboarding",
-    "questions": [
-        "Partition",
-        "Eligible SOR Codes (Example: ACCT/SOR,DEAL/SOR)",
-        "BUS UNIT",
-        "RCC RULES"
-    ],
-    "answers": {
-        "0": "P2",
-        "1": "Acct/sor1,DEAL/sor2",
-        "2": "Test",
-        "3": "COUNTRY,LOB,TYPE,DOC_CAT,DOC_TYPE,INV_REF,RCC CN,LOB1,ACCT,1,12,AlRCC US,LOB1,DEAL,1,,Al1RCCUS,,,,143,Al1RCC"
-    }
-}
+For dependency : npm install
+
+To start application : ng serve
+
+URL: http://localhost:4200/
+
+Initial Screen:
+![image](https://github.com/user-attachments/assets/bfc4f18d-69eb-40e6-af49-58bda4019f6b)
+
+
+On Successfull submission:
+![image](https://github.com/user-attachments/assets/de09e8b5-11dd-4722-8bcb-1d51c1bb8935)
 
 
