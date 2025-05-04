@@ -47,10 +47,11 @@ To start application : ng serve
 URL: http://localhost:4200/
 
 Initial Screen:
-![image](https://github.com/user-attachments/assets/bfc4f18d-69eb-40e6-af49-58bda4019f6b)
+![image](https://github.com/user-attachments/assets/77845eb9-962c-4f45-861b-f46fa4a1f3fd)
 
 
 On submission events will be displayed in real time:
-![image](https://github.com/user-attachments/assets/de09e8b5-11dd-4722-8bcb-1d51c1bb8935)
+![image](https://github.com/user-attachments/assets/0d0c5068-a4b3-4f10-ab12-2457fa33ca4e)
+
 
 
