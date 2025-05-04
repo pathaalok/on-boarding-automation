@@ -29,6 +29,7 @@ export class WfStepperComponent implements OnInit {
   firstFormGroup!: FormGroup;
   secondFormGroup!: FormGroup;
   events:any = [];
+  submitAction: boolean =false;
 
   constructor(private fb: FormBuilder,private http: HttpClient,private eventStreamService: EventStreamService) {}
 
@@ -84,7 +85,7 @@ export class WfStepperComponent implements OnInit {
 
 
   submit(){
-
+    this.submitAction = true;
     let payload = this.generatePayload();
 
     this.http.post('http://localhost:8000/questionare', payload).subscribe({
@@ -94,9 +95,11 @@ export class WfStepperComponent implements OnInit {
         this.events.push('Onboarding submitted successfully!');
         setTimeout(()=>{
           this.events = [];
-        },75000)
+        },7500)
+        this.submitAction = false;
       },
       error: (error) => {
+        this.submitAction = false;
         console.error('Error:', error);
         this.openSnackBar('Failed to submit onboarding.','');
         this.events.push('Failed to submit onboarding.');
@@ -107,7 +110,7 @@ export class WfStepperComponent implements OnInit {
 
   openSnackBar(message: string, action: string) {
     this._snackBar.open(message,action,{
-      duration: 50000
+      duration: 5000
     });
   }
 

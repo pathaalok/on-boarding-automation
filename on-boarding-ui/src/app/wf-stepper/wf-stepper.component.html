@@ -57,7 +57,7 @@
   
         <div>
           <button mat-button matStepperPrevious>Back</button>
-          <button mat-button [disabled]="firstFormGroup.invalid || secondFormGroup.invalid" color="primary" (click)="submit();">Submit</button>
+          <button mat-button [disabled]="firstFormGroup.invalid || secondFormGroup.invalid || submitAction" color="primary" (click)="submit();">Submit</button>
         </div>
       </form>
     </mat-step>
