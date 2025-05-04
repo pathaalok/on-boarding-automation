@@ -45,7 +45,13 @@ For dependency : npm install
 
 To start application : ng serve
 
+URL: http://localhost:4200/
 
+Initial Screen:
+![image](https://github.com/user-attachments/assets/bfc4f18d-69eb-40e6-af49-58bda4019f6b)
+
+
+On Successfull submission:
 ![image](https://github.com/user-attachments/assets/de09e8b5-11dd-4722-8bcb-1d51c1bb8935)
 
 
