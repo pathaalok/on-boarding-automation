@@ -77,6 +77,12 @@ DEMOS:
 Design Video:
 -
 
+
+https://github.com/user-attachments/assets/6f8fd97e-207c-470f-990a-c2330c81309f
+
+
+
+
 Application Video:
 -
 
