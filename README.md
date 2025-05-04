@@ -37,7 +37,7 @@ Python Service:
 uvicorn main:app --reload
 
 ----------------------------------------------------
-UI:
+Angular UI:
 
 Inside on-boarding-ui in cmd run:
 
@@ -45,5 +45,7 @@ For dependency : npm install
 
 To start application : ng serve
 
+
+![image](https://github.com/user-attachments/assets/de09e8b5-11dd-4722-8bcb-1d51c1bb8935)
 
 
