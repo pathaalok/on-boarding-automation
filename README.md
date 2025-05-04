@@ -18,6 +18,10 @@ GITHUB_TOKEN
 OPENAI_API_KEY
 LANGSMITH_API_KEY
 
+Python Service:
+
+uvicorn main:app --reload
+
 ----------------------------------------------------
 Java Services:
 
@@ -30,11 +34,6 @@ Admin Server (localhost:9000)
 Client App (localhost:8081)
 
 Config Repo (https://github.com/pathaalok/config-repo)
-
-----------------------------------------------------
-Python Service:
-
-uvicorn main:app --reload
 
 ----------------------------------------------------
 Angular UI:
