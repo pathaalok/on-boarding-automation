@@ -31,6 +31,8 @@
                 <mat-label>Eligible SOR Codes (Example: ACCT/SOR_CODE,DEAL/SOR_CODE)</mat-label>
                 <input type="text" matInput formControlName="sorCodes"/>
             </mat-form-field>
+
+           
             
         </div>
 
@@ -41,7 +43,30 @@
             </mat-form-field>
         </div>
   
+        <div class="form-row">
 
+
+            <mat-form-field appearance="fill" class="wf-field">
+                <mat-label>Sampling Rule Ref</mat-label>
+                <input type="text" matInput formControlName="samplingRuleRef"/>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="wf-field">
+                <mat-label>Sampling Id</mat-label>
+                <input type="text" matInput formControlName="samplingId"/>
+            </mat-form-field>
+
+            
+        </div>
+
+        <div class="form-row">
+           
+            
+            <mat-form-field appearance="fill" class="wf-field">
+                <mat-label>Sampling Data</mat-label>
+                <textarea matInput formControlName="samplingData" rows="3"></textarea>
+            </mat-form-field>
+        </div>
        
 
         <div style="float: right;"> 

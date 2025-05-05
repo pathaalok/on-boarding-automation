@@ -26,6 +26,8 @@ class QAState(TypedDict):
     updated_sor_codes: str
     rules_content: str
     updated_rules: str
+    bu_on_boarding_content: str
+    updated_bu_on_boarding: str
     abort: bool
 
 model = os.getenv("MODEL")
@@ -42,6 +44,7 @@ app_service_name = os.getenv("APP_SERVICE_NAME")
 
 sor_code_file = os.getenv("SOR_CODES_YML") 
 rule_file = os.getenv("RULES_YML") 
+bu_on_boarding_file = os.getenv("BU_ON_BOARDING_YML")
 
 # Queue for SSE
 event_queue = asyncio.Queue() 
@@ -259,10 +262,12 @@ def call_llm_for_rules(state: QAState) -> QAState:
         Partions:
             P0 is Federated
             P1 to P4 are non Regulated
+            P5 is Regulated
         
         You must:
         - Check whether a given key input for that section is already present if yes dont do any action
-        - If not present, update it in the respective section which are more matched with columns based on input data provided 
+        - If not present, update it in the respective section which are more matched with columns based on input data provided
+        - if value is not present for any column in above matched keep empty instead of null
         - Do not add any new sections from Input Data
         - key for each section should not contain duplicate
         - Maintain the structure and return the updated YAML.
@@ -280,6 +285,73 @@ def update_rules_file_node(state: QAState) -> QAState:
     branch_name = state.get("branch_name")
     update_or_create_file(state["updated_rules"], branch_name,rule_file,state["jira_no"])
     return state
+
+# 
+
+
+def fetch_bu_on_boarding(state: QAState) -> QAState:
+    branch_name = state.get("branch_name")
+    bu_on_boarding_content = fetch_content(branch_name,bu_on_boarding_file)
+    if not bu_on_boarding_content:
+        print(f"Failed to fetch {bu_on_boarding_file}")
+        stream_message_to_ui(f"Failed to fetch {bu_on_boarding_file}")
+        state["abort"] = True
+    else:
+        state["bu_on_boarding_content"] = bu_on_boarding_content
+    return state
+
+def call_llm_for_bu_on_boarding(state: QAState) -> QAState:
+
+    system_prompt = f"""
+       You are an expert onboarding assistant. You are provided with a YAML configuration that contains onboarding configuration
+
+        ------------------------------------------------------
+        Sample of the struture
+
+        busUnitOnBoardingCongif: # Key is the BUS_UNIT
+            BU_UNIT:
+                contentRepoRef: # Is a Array based on given Partition (example "Partition"_OS1)
+                    - "Partition"_OS1
+                dispositionConfig:
+                    enableDeleteNotification: # true if it is Regulated
+                    enableCaseNOtification: # true if it is Regulated
+                    notificationRecipts: abc@test.com
+                SamplingConfig: # Is a Array
+                    - ruleRef : # AUTO_APPROVE if non Regulated, if not consider "Sampling Rule Ref"from input data
+                    sampling:
+                        id: # based on "Sampling Id" from Input data
+                        values: # list base on "Sampling Data" from Input data
+                    
+        ------------------------------------------------------
+
+        Partions:
+            P0 is Federated
+            P1 to P4 are non Regulated
+            P5 is Regulated
+        
+        You must:
+        - Check whether a given Bus Unit input for that section is already present do not override but update respective section with given Input Data
+        - If not present, Create new section based on sample provided
+        - For SamplingConfig , if already present for Bus Unit check ruleRef also if present append to it if not create new with input data
+        - Maintain the structure and return the updated YAML.
+    
+        
+        Current DATA
+
+        \n\n{state["bu_on_boarding_content"]}
+    """
+    user_prompt = build_user_prompt(state)
+    updated_bu_on_boarding = call_ai_model(system_prompt, user_prompt)
+    print(" updated bu_on_boarding YAML.")
+    stream_message_to_ui(" updated BU ON BOARDING YAML from AI Model.")
+    state["updated_bu_on_boarding"] = updated_bu_on_boarding
+    return state
+
+def update_bu_on_boarding_node(state: QAState) -> QAState: 
+    branch_name = state.get("branch_name")
+    update_or_create_file(state["updated_bu_on_boarding"], branch_name,bu_on_boarding_file,state["jira_no"])
+    return state
+# 
 
 def create_pr_node(state: QAState) -> QAState:
     branch_name = state.get("branch_name")
@@ -357,6 +429,10 @@ graph.add_node("fetch_rules", fetch_rules)
 graph.add_node("call_llm_for_rules", call_llm_for_rules)
 graph.add_node("update_rules_file", update_rules_file_node)
 
+graph.add_node("fetch_bu_on_boarding", fetch_bu_on_boarding)
+graph.add_node("call_llm_for_bu_on_boarding", call_llm_for_bu_on_boarding)
+graph.add_node("update_bu_on_boarding_file", update_bu_on_boarding_node)
+
 graph.add_node("create_pr", create_pr_node)
 
 graph.add_node("call_api_to_update_config", call_api_to_update_config)
@@ -376,12 +452,16 @@ graph.add_edge("update_sor_codes_file", "fetch_rules")
 graph.add_edge("fetch_rules", "call_llm_for_rules")
 graph.add_edge("call_llm_for_rules", "update_rules_file")
 
+graph.add_edge("update_rules_file", "fetch_bu_on_boarding")
+graph.add_edge("fetch_bu_on_boarding", "call_llm_for_bu_on_boarding")
+graph.add_edge("call_llm_for_bu_on_boarding", "update_bu_on_boarding_file")
+
 # enable this without LLM call just to test flow
 # graph.add_edge("create_on_boarding_branch", "fetch_rules")
 # graph.add_edge("fetch_rules", "update_rules_file")
 # enable this without LLM call just to test flow
 
-graph.add_edge("update_rules_file", "create_pr")
+graph.add_edge("update_bu_on_boarding_file", "create_pr")
 graph.add_edge("create_pr", "call_api_to_update_config")
 
 graph.add_edge("call_api_to_update_config", END)

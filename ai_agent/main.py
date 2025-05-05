@@ -45,6 +45,8 @@ def submit_qa(data: QAInput):
         "updated_sor_codes": "",
         "rules_content":"",
         "updated_rules": "",
+        "bu_on_boarding_content": "",
+        "updated_bu_on_boarding": "",
         "abort": False
     }
 

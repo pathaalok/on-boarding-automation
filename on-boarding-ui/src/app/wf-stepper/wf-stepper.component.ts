@@ -28,7 +28,7 @@ export class WfStepperComponent implements OnInit {
 
   firstFormGroup!: FormGroup;
   secondFormGroup!: FormGroup;
-  events:any = ["Test123","Test123 Test123","tete tete tete tete tete tete "];
+  events:any = [];
   submitAction: boolean =false;
 
   constructor(private fb: FormBuilder,private http: HttpClient,private eventStreamService: EventStreamService) {}
@@ -44,6 +44,9 @@ export class WfStepperComponent implements OnInit {
       sorCodes: ['', Validators.required],
       busUnit: ['', Validators.required],
       rccRules: ['', Validators.required],
+      samplingRuleRef: [''],
+      samplingId: ['', Validators.required],
+      samplingData: ['', Validators.required]
     });
 
     this.secondFormGroup = this.fb.group({
@@ -58,7 +61,10 @@ export class WfStepperComponent implements OnInit {
       'Partition',
       'Eligible SOR Codes (Example: ACCT/SOR,DEAL/SOR)',
       'BUS UNIT',
-      'RCC RULES'
+      'RCC RULES',
+      'Sampling Rule Ref',
+      'Sampling Id',
+      'Sampling Data'
     ];
   
     const firstValues = this.firstFormGroup.value;
@@ -67,7 +73,10 @@ export class WfStepperComponent implements OnInit {
       "0": firstValues.partition,
       "1": firstValues.sorCodes,
       "2": firstValues.busUnit,
-      "3": firstValues.rccRules
+      "3": firstValues.rccRules,
+      "4": firstValues.samplingRuleRef,
+      "5": firstValues.samplingId,
+      "6": firstValues.samplingData
     };
   
     const payload = {
