@@ -64,12 +64,14 @@ To start application : ng serve
 URL: http://localhost:4200/
 
 Initial Screen:
-![image](https://github.com/user-attachments/assets/77845eb9-962c-4f45-861b-f46fa4a1f3fd)
+![image](https://github.com/user-attachments/assets/4f2a6bd1-db58-457d-976f-244a6b48f91c)
+
 
 
 On submission events will be displayed in real time:
 ![image](https://github.com/user-attachments/assets/0d0c5068-a4b3-4f10-ab12-2457fa33ca4e)
 
+Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/25/files
 
 DEMOS:
 -
