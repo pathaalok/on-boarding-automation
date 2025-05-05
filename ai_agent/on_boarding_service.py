@@ -226,7 +226,7 @@ def call_llm_for_sor_codes(state: QAState) -> QAState:
         - extract only the SOR from given input format ACCT/SOR_CODE,DEAL/SOR_CODE check case in-sensitive
         - Check whether a given SOR is present in Acct or DEAL respectively.
         - If not present, update it in the respective section
-        - Do not add any new sections from Input Data
+        - Do not add any new sections from INPUT DATA
         - Maintain the structure and return the updated YAML.
          
         \n\n{state["sor_codes_content"]}
@@ -257,18 +257,25 @@ def fetch_rules(state: QAState) -> QAState:
 def call_llm_for_rules(state: QAState) -> QAState:
 
     system_prompt = f"""
-        You are an expert onboarding assistant. You are provided with a YAML configuration that contains rules configuration based on rule types non_regulated_rccRule,inv_ref_id_rccRule,non_regulated_inv_ref_id_rccRule
- 
-        Partions:
+        You are an expert onboarding assistant. You are provided with a YAML configuration that contains rules configuration based on below rule types
+
+        Partions Info:
             P0 is Federated
             P1 to P4 are non Regulated
             P5 is Regulated
+
+        Rule Types Description :
+            non_regulated_rccRule (when Partition is non Regulated and #COUNTRY|LOB|TYPE|DOC_CAT|DOC_TYPE have data from "RCC RULES" INPUT DATA),
+            inv_ref_id_rccRule (when Partition is Regulated and #COUNTRY|INV_REF have data from "RCC RULES" INPUT DATA),
+            non_regulated_inv_ref_id_rccRule  (when Partition is non Regulated and #COUNTRY|INV_REF have data from "RCC RULES" from INPUT DATA)
+ 
         
         You must:
+        - Consider the data only from "RCC RULES" from INPUT DATA
         - Check whether a given key input for that section is already present if yes dont do any action
-        - If not present, update it in the respective section which are more matched with columns based on input data provided
-        - if value is not present for any column in above matched keep empty instead of null
-        - Do not add any new sections from Input Data
+        - If not present, update it in the respective section which are more matched with columns based on "RCC RULES" INPUT DATA provided
+        - if value is not present for any column in above matched keep '' instead of null
+        - Do not add any new sections from INPUT DATA
         - key for each section should not contain duplicate
         - Maintain the structure and return the updated YAML.
         
@@ -317,10 +324,10 @@ def call_llm_for_bu_on_boarding(state: QAState) -> QAState:
                     enableCaseNOtification: # true if it is Regulated
                     notificationRecipts: abc@test.com
                 SamplingConfig: # Is a Array
-                    - ruleRef : # AUTO_APPROVE if non Regulated, if not consider "Sampling Rule Ref"from input data
+                    - ruleRef : # AUTO_APPROVE if non Regulated, if not consider "Sampling Rule Ref" from INPUT DATA
                     sampling:
-                        id: # based on "Sampling Id" from Input data
-                        values: # list base on "Sampling Data" from Input data
+                        id: # based on "Sampling Id" from INPUT DATA
+                        values: # list base on "Sampling Data" from INPUT DATA
                     
         ------------------------------------------------------
 
@@ -330,9 +337,9 @@ def call_llm_for_bu_on_boarding(state: QAState) -> QAState:
             P5 is Regulated
         
         You must:
-        - Check whether a given Bus Unit input for that section is already present do not override but update respective section with given Input Data
+        - Check whether a given Bus Unit input for that section is already present do not override but update respective section with given INPUT DATA
         - If not present, Create new section based on sample provided
-        - For SamplingConfig , if already present for Bus Unit check ruleRef also if present append to it if not create new with input data
+        - For SamplingConfig , if already present for Bus Unit check ruleRef also if present append to it if not create new with INPUT DATA
         - Maintain the structure and return the updated YAML.
     
         
