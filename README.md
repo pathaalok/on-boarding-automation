@@ -18,7 +18,6 @@ Angular UI
 ---------------------------------------------------
 Design :
 -
-![on_boarding_automation drawio](https://github.com/user-attachments/assets/2d66f967-c4c8-448f-a747-f6fe33a1839f)
 
 ![New_Design](https://github.com/user-attachments/assets/e1a57466-42df-4df3-a988-7ca100f0adc5)
 
