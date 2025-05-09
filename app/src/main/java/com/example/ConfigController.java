@@ -5,12 +5,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.endpoint.RefreshEndpoint;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -74,6 +79,39 @@ public class ConfigController {
                 .filter(registration -> appName.equalsIgnoreCase((String) registration.get("name")))
                 .map(registration -> (String) registration.get("serviceUrl"))
                 .collect(Collectors.toList());
+    }
+
+    private static final String PROJECT_DIR = "C:\\Users\\Administrator\\Desktop\\on-boarding-automation\\app";
+
+    @GetMapping("/admin/gradle-task")
+    public ResponseEntity<String> runGradleTask(@RequestParam String taskName) {
+        try {
+//            ProcessBuilder processBuilder = new ProcessBuilder("./gradlew", taskName);
+            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "gradlew.bat", taskName);
+
+            processBuilder.directory(new File(PROJECT_DIR));
+            processBuilder.redirectErrorStream(true);
+
+            Process process = processBuilder.start();
+
+            // Capture output
+            StringBuilder output = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
+
+            int exitCode = process.waitFor();
+            output.append("\nExit code: ").append(exitCode);
+            return ResponseEntity.ok(output.toString());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to run task: " + e.getMessage());
+        }
     }
 
 }

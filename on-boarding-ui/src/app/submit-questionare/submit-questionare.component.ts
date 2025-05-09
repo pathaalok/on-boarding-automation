@@ -10,7 +10,7 @@ import { EventStreamService } from './event-stream.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-wf-stepper',
+  selector: 'app-submit-questionare',
   standalone: true,
   imports: [
     CommonModule,
@@ -20,10 +20,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatInputModule,
     MatButtonModule
   ],
-  templateUrl: './wf-stepper.component.html',
-  styleUrls: ['./wf-stepper.component.scss'],
+  templateUrl: './submit-questionare.component.html',
+  styleUrls: ['./submit-questionare.component.scss'],
 })
-export class WfStepperComponent implements OnInit {
+export class SubmitQuestionareComponent implements OnInit {
   private _snackBar = inject(MatSnackBar);
 
   firstFormGroup!: FormGroup;

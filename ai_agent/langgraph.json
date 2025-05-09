@@ -2,7 +2,7 @@
   "dockerfile_lines": [],
   "graphs": {
     
-    "on_boarding_graph": "./on-boarding.py:graph",
+    "submit_on_boarding_service": "./submit_on_boarding_service.py:graph",
     "simple_graph": "./simple.py:graph"
   
   },

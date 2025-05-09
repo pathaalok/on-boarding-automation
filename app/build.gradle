@@ -25,3 +25,9 @@ dependencyManagement {
 repositories {
 	mavenCentral()
 }
+
+tasks.register('myCustomTask') {
+	doLast {
+		println "Running my custom task..."
+	}
+}

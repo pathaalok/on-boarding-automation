@@ -27,6 +27,7 @@
   button.mat-button {
     background-color: #a6192e;
     color: white;
+    border: 1px solid #a6192e;
   }
   
   button.mat-button:hover {
@@ -46,4 +47,9 @@
 
   .event{
     padding: 2px 8px;
+  }
+
+  button {
+    padding: 8px 12px;
+    border: 1px solid #a6192e;
   }
