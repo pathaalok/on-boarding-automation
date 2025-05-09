@@ -18,7 +18,8 @@ Angular UI
 ---------------------------------------------------
 Design :
 -
-![on_boarding_automation drawio](https://github.com/user-attachments/assets/2d66f967-c4c8-448f-a747-f6fe33a1839f)
+
+![New_Design](https://github.com/user-attachments/assets/e1a57466-42df-4df3-a988-7ca100f0adc5)
 
 ----------------------------------------------------
 
@@ -64,14 +65,15 @@ To start application : ng serve
 URL: http://localhost:4200/
 
 Initial Screen:
-![image](https://github.com/user-attachments/assets/4f2a6bd1-db58-457d-976f-244a6b48f91c)
+
+![image](https://github.com/user-attachments/assets/60d6278f-2f04-4b59-a083-8ac6ba55ae2c)
 
 
 
 On submission events will be displayed in real time:
 ![image](https://github.com/user-attachments/assets/0d0c5068-a4b3-4f10-ab12-2457fa33ca4e)
 
-Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/25/files
+Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/35/files
 
 DEMOS:
 -
