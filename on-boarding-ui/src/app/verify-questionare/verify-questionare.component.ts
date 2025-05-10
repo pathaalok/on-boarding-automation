@@ -7,6 +7,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatExpansionModule } from '@angular/material/expansion';
+
+
+interface QuestionData {
+  questions: string[];
+  answers: { [index: string]: string };
+}
 
 @Component({
   selector: 'app-on-board-questionare',
@@ -17,21 +24,38 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatStepperModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatExpansionModule,
   ],
   templateUrl: './verify-questionare.component.html',
   styleUrls: ['./verify-questionare.component.scss'],
 })
 export class VerifyQuestionareComponent implements OnInit {
-  private _snackBar = inject(MatSnackBar);
 
+ 
 
-  constructor(private fb: FormBuilder,private http: HttpClient) {}
+  allQuestionares: Record<string, QuestionData> = {};
+
+  constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-   
+    this.loadQuestionaresToVerify();
   }
 
-  
+  loadQuestionaresToVerify() {
+    this.http.get('http://localhost:8000/all_qa').subscribe((res:any) => {
+      this.allQuestionares = res;
+    });
+  }
+
+  verifyDataConflicts(questionId: string) {
+    const session = this.allQuestionares[questionId];
+    alert(`Verified session: ${questionId}`);
+    // Optional: make a POST request to update verification status in backend.
+  }
+
+  proceedToSubmit(questionId: string){
+
+  }
 
 }

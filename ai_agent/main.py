@@ -1,12 +1,14 @@
 from dotenv import load_dotenv
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
 from submit_on_boarding_service import run_langgraph, QAState,event_stream
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
+import uuid
+
 
 # Load environment variables
 load_dotenv()
@@ -22,13 +24,14 @@ app.add_middleware(
 )
 
 
-# =================== On Board Questionare =====================
-
 
 # Set up Gemini API
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
+
+# =================== On Board Questionare =====================
+
 
 # In-memory state
 sessions = {}
@@ -36,21 +39,21 @@ sessions = {}
 # Define list of questions
 questions = [
     "Enter Partition?",
-    "Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)",
-    "Enter BUS UNIT",
-    "Enter RCC RULES",
-    "Enter Sampling Rule Ref",
-    'Enter Sampling Id',
+    # "Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)",
+    # "Enter BUS UNIT",
+    # "Enter RCC RULES",
+    # "Enter Sampling Rule Ref",
+    # 'Enter Sampling Id',
     'Enter Sampling Data'
 ]
 
 full_prompts = [
     "Enter Partition ( P0, P1, P2, P3, P4, P5)",
-    "Enter Eligible SOR Codes (Example Format: ACCT/SOR,DEAL/SOR)",
-    "Enter BUS UNIT ",
-    "Enter RCC RULES ",
-    "Enter Sampling Rule Ref ",
-    'Enter Sampling Id ',
+    # "Enter Eligible SOR Codes (Example Format: ACCT/SOR,DEAL/SOR)",
+    # "Enter BUS UNIT ",
+    # "Enter RCC RULES ",
+    # "Enter Sampling Rule Ref ",
+    # 'Enter Sampling Id ',
     'Enter Sampling Data '
 ]
 
@@ -58,6 +61,9 @@ class UserMessage(BaseModel):
     session_id: str
     message: str
     edit_index: int = None
+
+    
+        # 2. **SOR Codes**: Must follow this format: ACCT/SOR,DEAL/SOR (one or more items, comma-separated).
 
 @app.post("/start")
 def start_conversation():
@@ -72,8 +78,6 @@ def start_conversation():
 
         ### Validation Rules:
         1. **Partition**: Only accept one of P0, P1, P2, P3, P4, P5. Reject and re-ask if invalid.
-        2. **SOR Codes**: Must follow this format: ACCT/SOR,DEAL/SOR (one or more items, comma-separated).
-        3. For other questions, you may use basic judgment to detect obviously incorrect inputs.
 
         ### Behavior:
         - If an answer is invalid, **explain the error** and **re-ask the same question**.
@@ -94,12 +98,16 @@ def start_conversation():
     }
     return {"session_id": session_id, "question": convo.last.text}
 
+
 @app.post("/message")
 def process_message(user_msg: UserMessage):
     session = sessions.get(user_msg.session_id)
     if not session:
         return {"error": "Invalid session"}
     
+    convo = session["convo"]
+
+    # User confirmed their answers
     if "confirm" in user_msg.message.lower():
         formatted_answers = {str(i): ans["user"] for i, ans in enumerate(session["answers"])}
         final_output = {
@@ -112,14 +120,39 @@ def process_message(user_msg: UserMessage):
             "final_output": final_output
         }
 
-    convo = session["convo"]
-    index = session["index"] if user_msg.edit_index is None else user_msg.edit_index
+    # Handle edit mode
+    if user_msg.edit_index is not None:
+        index = user_msg.edit_index
+        question = full_prompts[index]
 
-    # Send user message to Gemini
+        # Tell Gemini what is being edited
+        convo.send_message(f"Revisiting this question:\n{question}\nUser answered: {user_msg.message}")
+        bot_response = convo.last.text
+
+        # Check if invalid
+        if "invalid" in bot_response.lower() or "please re-enter" in bot_response.lower():
+            return {
+                "response": bot_response,
+                "question": full_prompts[index]
+            }
+
+        # Save new answer and update history
+        session["answers"][index] = {"user": user_msg.message, "bot": bot_response}
+        session["history"][index].append(user_msg.message)
+
+        return {
+            "response": bot_response,
+            "preview": session["answers"],
+            "history": session["history"]
+        }
+
+    # Normal (non-edit) flow
+    index = session["index"]
+
     convo.send_message(user_msg.message)
     bot_response = convo.last.text
 
-    # Check if LLM thinks the answer is invalid
+    # If answer is invalid
     if "invalid" in bot_response.lower() or "please re-enter" in bot_response.lower():
         return {
             "response": bot_response,
@@ -131,15 +164,10 @@ def process_message(user_msg: UserMessage):
         session["answers"][index] = {"user": user_msg.message, "bot": bot_response}
         session["history"][index].append(user_msg.message)
 
-    if user_msg.edit_index is not None:
-        return {
-            "response": bot_response,
-            "preview": session["answers"],
-            "history": session["history"]
-        }
-
+    # Move to next question
     session["index"] += 1
 
+    # If all questions answered, show preview
     if session["index"] >= len(full_prompts):
         formatted_answers = {str(i): ans["user"] for i, ans in enumerate(session["answers"])}
         return {
@@ -152,11 +180,39 @@ def process_message(user_msg: UserMessage):
             }
         }
 
+    # Otherwise, continue to next question
     return {
         "response": full_prompts[session["index"]]
     }
 
 
+# =================== Verify Questionare =====================
+
+class VerifyQAInput(BaseModel):
+    questions: List[str]
+    answers: Dict[int, str]
+
+qa_store = {
+    "test":{"questions":["Enter Partition?","Enter Sampling Data"],"answers":{"0":"p1","1":"123"}}
+}
+
+
+@app.post("/store_qa")
+def store_qa(data: VerifyQAInput):
+    session_id = str(uuid.uuid4())
+    qa_store[session_id] = data
+    return {"session_id": session_id, "message": "QA data stored successfully"}
+
+@app.get("/all_qa")
+def get_qa():
+    return qa_store
+
+@app.get("/qa/{session_id}")
+def get_qa(session_id: str):
+    data = qa_store.get(session_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return data
 
 # =================== Submit Questionare =====================
 

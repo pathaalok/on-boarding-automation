@@ -24,33 +24,40 @@
 </div> -->
 
 <div class="chat-window">
-    <div *ngFor="let msg of messages" class="message" [class.user]="msg.role === 'user'">
-      {{ msg.text }}
-    </div>
-  
-    <div *ngIf="previewMode">
-      <h4>Preview Your Answers:</h4>
-      <ul>
-        <li *ngFor="let pair of previewAnswers; let i = index">
-          <strong>Q:</strong> {{ pair.bot }}<br>
-          <strong>A:</strong> {{ pair.user }}
-          <button (click)="editAnswer(i)">Edit</button>
-        </li>
-      </ul>
-      <button mat-button (click)="confirmAnswers()">Confirm</button>
-    </div>
-  
 
-    <div *ngIf="!previewMode && !confirmed" class="form-row">
-        <mat-form-field appearance="fill" class="wf-field">
-            <textarea matInput [(ngModel)]="userInput" (keyup.enter)="sendMessage()" placeholder="Type your answer..." rows="2"></textarea>
-        </mat-form-field>
-      
-        <button mat-button (click)="sendMessage()">Send</button>
+    <div style="text-align: right;">
+      <button mat-button (click)="restartChat()">Start New On-Boarding</button>
     </div>
+
+    <ng-container *ngIf="startNewOnboarding">
+
+      <div *ngFor="let msg of messages" class="message" [class.user]="msg.role === 'user'">
+        {{ msg.text }}
+      </div>
+    
+      <div *ngIf="previewMode">
+        <h4>Preview Your Answers:</h4>
+        <ul>
+          <li *ngFor="let question of finalJson?.questions; let i = index">
+            <strong>Q:</strong> {{ question }}<br>
+            <strong>A:</strong> {{ finalJson?.answers[i] }}
+            <button (click)="editAnswer(i)">Edit</button>
+          </li>
+        </ul>
+        <button mat-button (click)="confirmAnswers()">Confirm</button>
+      </div>
+    
   
-    <div *ngIf="confirmed">
-      <!-- <h4>Thank you! Your Questionare is sent for review:</h4> -->
-      <button (click)="restartChat()">Start Over</button>
-    </div>
+      <div *ngIf="!previewMode && !confirmed" class="form-row">
+          <mat-form-field appearance="fill" class="wf-field">
+              <textarea matInput [(ngModel)]="userInput" (keyup.enter)="sendMessage()" placeholder="Type your answer..." rows="2"></textarea>
+          </mat-form-field>
+        
+          <button mat-button (click)="sendMessage()">Send</button>
+      </div>
+    </ng-container>
+
+    
+  
+    
   </div>

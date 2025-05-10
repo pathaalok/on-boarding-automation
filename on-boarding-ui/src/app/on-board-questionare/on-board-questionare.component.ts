@@ -31,11 +31,12 @@ export class OnBoardQuestionareComponent implements OnInit {
   editingIndex: number | null = null;
   finalJson: any = null;
   confirmed = false;
+  startNewOnboarding = false;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
-    this.startSession();
+    
   }
 
   startSession() {
@@ -49,6 +50,7 @@ export class OnBoardQuestionareComponent implements OnInit {
       this.editingIndex = null;
       this.finalJson = null;
       this.confirmed = false;
+      this.startNewOnboarding = true;
     });
   }
 
@@ -77,9 +79,15 @@ export class OnBoardQuestionareComponent implements OnInit {
         this.finalJson = res.json_output;
       }
       if (res.final_output) {
-        this.confirmed = true;
         this.finalJson = res.final_output;
+        this.sendDataForVerification()
       }
+    });
+  }
+
+  sendDataForVerification(){
+    this.http.post<any>('http://localhost:8000/store_qa', this.finalJson).subscribe(res => {
+      this.confirmed = true;
     });
   }
 
@@ -103,8 +111,8 @@ export class OnBoardQuestionareComponent implements OnInit {
     }).subscribe(res => {
       this.messages.push({ role: 'bot', text: res.response });
       if (res.final_output) {
-        this.confirmed = true;
         this.finalJson = res.final_output;
+        this.sendDataForVerification()
       }
     });
   }
