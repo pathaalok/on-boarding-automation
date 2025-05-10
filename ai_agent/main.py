@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Dict
+from typing import List, Dict, Optional
 from submit_on_boarding_service import run_langgraph, QAState,event_stream
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
@@ -192,27 +192,24 @@ class VerifyQAInput(BaseModel):
     questions: List[str]
     answers: Dict[int, str]
 
-qa_store = {
+verify_qa_store = {
     "test":{"questions":["Enter Partition?","Enter Sampling Data"],"answers":{"0":"p1","1":"123"}}
 }
 
-
-@app.post("/store_qa")
+@app.post("/store_verify_qa")
 def store_qa(data: VerifyQAInput):
     session_id = str(uuid.uuid4())
-    qa_store[session_id] = data
+    verify_qa_store[session_id] = data
     return {"session_id": session_id, "message": "QA data stored successfully"}
 
-@app.get("/all_qa")
-def get_qa():
-    return qa_store
+@app.get("/all_verify_qa")
+def get_verify_all_qa():
+    return verify_qa_store
 
-@app.get("/qa/{session_id}")
-def get_qa(session_id: str):
-    data = qa_store.get(session_id)
-    if not data:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return data
+@app.delete("/verify_qa/{session_id}")
+def get_verify_all_qa(session_id: str):
+    del verify_qa_store[session_id]
+    return verify_qa_store
 
 # =================== Submit Questionare =====================
 
@@ -220,9 +217,23 @@ def get_qa(session_id: str):
 class QAInput(BaseModel):
     questions: List[str]
     answers: Dict[int, str]
-    base_branch: str
-    new_branch: str
-    jira_no: str
+    base_branch: Optional[str] = None
+    new_branch: Optional[str] = None
+    jira_no: Optional[str] = None
+
+submit_qa_store = {
+    
+}
+
+@app.post("/store_submit_qa")
+def store_qa(data: QAInput):
+    session_id = str(uuid.uuid4())
+    submit_qa_store[session_id] = data
+    return {"session_id": session_id, "message": "QA data stored successfully"}
+
+@app.get("/all_submit_qa")
+def get_submit_all_qa():
+    return submit_qa_store
 
 
 @app.get("/events")

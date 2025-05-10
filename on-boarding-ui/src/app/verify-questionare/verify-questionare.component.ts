@@ -33,6 +33,7 @@ interface QuestionData {
 export class VerifyQuestionareComponent implements OnInit {
 
  
+  private _snackBar = inject(MatSnackBar);
 
   allQuestionares: Record<string, QuestionData> = {};
 
@@ -43,7 +44,7 @@ export class VerifyQuestionareComponent implements OnInit {
   }
 
   loadQuestionaresToVerify() {
-    this.http.get('http://localhost:8000/all_qa').subscribe((res:any) => {
+    this.http.get('http://localhost:8000/all_verify_qa').subscribe((res:any) => {
       this.allQuestionares = res;
     });
   }
@@ -51,11 +52,26 @@ export class VerifyQuestionareComponent implements OnInit {
   verifyDataConflicts(questionId: string) {
     const session = this.allQuestionares[questionId];
     alert(`Verified session: ${questionId}`);
-    // Optional: make a POST request to update verification status in backend.
   }
 
   proceedToSubmit(questionId: string){
+    let payload = this.allQuestionares[questionId]
+    this.http.post<any>('http://localhost:8000/store_submit_qa', payload).subscribe(res => {
+      this.deleteQuestionare(questionId);
+    });
+  }
 
+  deleteQuestionare(questionId: string) {
+    this.http.delete('http://localhost:8000/verify_qa/'+questionId).subscribe((res:any) => {
+      this.allQuestionares = res;
+      this.openSnackBar("Action successfully processed","");
+    });
+  }
+
+  openSnackBar(message: string, action: string) {
+    this._snackBar.open(message,action,{
+      duration: 5000
+    });
   }
 
 }

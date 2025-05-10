@@ -86,7 +86,7 @@ export class OnBoardQuestionareComponent implements OnInit {
   }
 
   sendDataForVerification(){
-    this.http.post<any>('http://localhost:8000/store_qa', this.finalJson).subscribe(res => {
+    this.http.post<any>('http://localhost:8000/store_verify_qa', this.finalJson).subscribe(res => {
       this.confirmed = true;
     });
   }
