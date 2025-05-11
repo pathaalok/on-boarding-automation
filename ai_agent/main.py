@@ -194,7 +194,6 @@ class VerifyQAInput(BaseModel):
     answers: Dict[int, str]
 
 verify_qa_store = {
-    "test":{"questions":["Enter Partition?","Enter Sampling Data"],"answers":{"0":"p1","1":"123"}},
     "test2":{"questions":["Enter Partition?","Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)","Enter BUS UNIT","Enter RCC RULES","Enter Sampling Rule Ref","Enter Sampling Id","Enter Sampling Data"],"answers":{"0":"P2","1":"ACCT/123","2":"Test","3":"COUNTRY,LOB,TYPE,DOC_CAT,DOC_TYPE,INV_REF,RCC\nCN,LOB1,ACCT,1,12,AlRCC\nUS,LOB1,DEAL,1,,Al1RCC\nUS,,,,123,RCC4","4":"123","5":"123","6":"123"}}
 }
 
@@ -235,7 +234,8 @@ def verify_qa(session_id: str,branch_name:str):
         
         You must:
         - Consider the data only from "RCC RULES" from INPUT DATA
-        - Check whether a given key input for that section is already present. Only report conflicts where an input rule attempts to redefine an existing rule with a different RCC value.
+        - Check whether a given key input for that section is already present. 
+        - Only report conflicts where an input rule attempts to redefine an existing rule with a different RCC value.
         - Collect all conflict rules and line numbers from "RCC RULES" from INPUT DATA and give respose in below format
 
         rule => rule data from RCC Rules input data

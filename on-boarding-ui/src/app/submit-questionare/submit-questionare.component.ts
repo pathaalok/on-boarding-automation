@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,8 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { EventStreamService } from './event-stream.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { EventStreamService } from '../submit-questionares/event-stream.service';
 
 @Component({
   selector: 'app-submit-questionare',
@@ -23,22 +23,28 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   templateUrl: './submit-questionare.component.html',
   styleUrls: ['./submit-questionare.component.scss'],
 })
-export class SubmitQuestionareComponent implements OnInit {
+export class SubmitQuestionareComponent implements OnInit,OnChanges  {
   private _snackBar = inject(MatSnackBar);
 
-  firstFormGroup!: FormGroup;
-  secondFormGroup!: FormGroup;
-  events:any = [];
+  firstFormGroup: FormGroup;
   submitAction: boolean =false;
 
-  constructor(private fb: FormBuilder,private http: HttpClient,private eventStreamService: EventStreamService) {}
+  @Input() questionare!:any;
+  @Input() questionareFormState: any;
+  @Input() showBranchDetails:any ;
 
-  ngOnInit(): void {
-    this.eventStreamService.getServerEvents().subscribe({
-      next: (msg) => this.events.push(msg),
-      error: (err) => console.error('SSE error:', err),
-    });
 
+  questionToFormControlMap: { [key: string]: string } = {
+    "0": "partition",
+    "1": "sorCodes",
+    "2": "busUnit",
+    "3": "rccRules",
+    "4": "samplingRuleRef",
+    "5": "samplingId",
+    "6": "samplingData"
+  };
+
+  constructor(private fb: FormBuilder,private http: HttpClient,public eventStreamService: EventStreamService) {
     this.firstFormGroup = this.fb.group({
       partition: ['', Validators.required],
       sorCodes: ['', Validators.required],
@@ -46,26 +52,47 @@ export class SubmitQuestionareComponent implements OnInit {
       rccRules: ['', Validators.required],
       samplingRuleRef: [''],
       samplingId: ['', Validators.required],
-      samplingData: ['', Validators.required]
-    });
-
-    this.secondFormGroup = this.fb.group({
-      jiraNo:['', Validators.required],
-      baseBranch: ['', Validators.required],
-      newBranch: ['', Validators.required],
+      samplingData: ['', Validators.required],
+      jiraNo:[''],
+      baseBranch: [''],
+      newBranch: [''],
     });
   }
 
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['questionare'] && this.questionare) {
+      this.patchAnswersToForm(this.questionare.answers);
+    }
+
+    if (changes['questionareFormState'] && this.questionareFormState) {
+      if("Enable" == this.questionareFormState){
+        this.firstFormGroup.enable();
+      }else{
+        this.firstFormGroup.disable();
+        ['newBranch', 'jiraNo', 'baseBranch'].forEach(controlName => {
+          this.firstFormGroup.get(controlName)?.enable();
+        });
+      }
+    }
+  }
+
+  patchAnswersToForm(answers: { [key: string]: string }) {
+    for (const [index, value] of Object.entries(answers)) {
+      const controlName = this.questionToFormControlMap[index];
+      if (controlName && this.firstFormGroup.contains(controlName)) {
+        this.firstFormGroup.get(controlName)?.setValue(value);
+      }
+    }
+  }
+  
+
+  ngOnInit(): void {
+    
+  }
+
   generatePayload() {
-    const questions = [
-      'Partition',
-      'Eligible SOR Codes (Example: ACCT/SOR,DEAL/SOR)',
-      'BUS UNIT',
-      'RCC RULES',
-      'Sampling Rule Ref',
-      'Sampling Id',
-      'Sampling Data'
-    ];
+    const questions = this.questionare.questions;
   
     const firstValues = this.firstFormGroup.value;
   
@@ -80,9 +107,9 @@ export class SubmitQuestionareComponent implements OnInit {
     };
   
     const payload = {
-      base_branch: this.secondFormGroup.value.baseBranch,
-      new_branch: this.secondFormGroup.value.newBranch,
-      jira_no: this.secondFormGroup.value.jiraNo,
+      base_branch: this.firstFormGroup.value.baseBranch,
+      new_branch: this.firstFormGroup.value.newBranch,
+      jira_no: this.firstFormGroup.value.jiraNo,
       questions,
       answers
     };
@@ -101,9 +128,9 @@ export class SubmitQuestionareComponent implements OnInit {
       next: (response) => {
         console.log('Success:', response);
         this.openSnackBar('Onboarding submitted successfully!','');
-        this.events.push('Onboarding submitted successfully!');
+        this.eventStreamService.events.push('Onboarding submitted successfully!');
         setTimeout(()=>{
-          this.events = [];
+          this.eventStreamService.events = [];
         },7500)
         this.submitAction = false;
       },
@@ -111,7 +138,7 @@ export class SubmitQuestionareComponent implements OnInit {
         this.submitAction = false;
         console.error('Error:', error);
         this.openSnackBar('Failed to submit onboarding.','');
-        this.events.push('Failed to submit onboarding.');
+        this.eventStreamService.events.push('Failed to submit onboarding.');
       }
     });
     

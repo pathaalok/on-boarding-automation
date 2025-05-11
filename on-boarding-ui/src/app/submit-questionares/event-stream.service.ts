@@ -7,6 +7,9 @@ import { Observable } from 'rxjs';
 export class EventStreamService {
   constructor(private ngZone: NgZone) {}
 
+  
+  events:any = [];
+  
   getServerEvents(): Observable<string> {
     return new Observable<string>((observer) => {
       const eventSource = new EventSource('http://localhost:8000/events'); // Adjust if needed

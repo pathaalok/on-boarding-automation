@@ -1,0 +1,28 @@
+
+<div class="event-container" *ngIf="eventStreamService?.events.length>0">
+       <div class="event" > <label (click)="eventStreamService.events=[];">X</label></div>
+       <div class="event" *ngFor="let event of eventStreamService.events">
+           {{ event }}
+       </div>
+</div>
+<div *ngIf="allQuestionares && (allQuestionares | keyvalue).length > 0; else noData">
+    <h3>Questionares to Submit</h3>
+    <div *ngFor="let questionare of allQuestionares | keyvalue" class="validation-questionare-container">
+        <mat-expansion-panel
+            (opened)="onPanelOpened(questionare)" 
+            (closed)="onPanelClosed(questionare)"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              On Boarding Name : {{ questionare.key }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+      
+    
+          <app-submit-questionare [questionare]="questionare.value" [questionareFormState]="questionareFormState" [showBranchDetails]="true"> </app-submit-questionare>
+        </mat-expansion-panel>
+      </div>
+    </div>
+      <ng-template #noData>
+        <p><strong>No Questionare(s) available.</strong></p>
+      </ng-template>

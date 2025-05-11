@@ -1,16 +1,6 @@
-<div class="event-container" *ngIf="events.length>0">
-    <div class="event" > <label (click)="events=[];">X</label></div>
-    <div class="event" *ngFor="let event of events">
-        {{ event }}
-    </div>
-</div>
 
-
-<mat-horizontal-stepper linear>
-    <mat-step [stepControl]="firstFormGroup">
-      <form [formGroup]="firstFormGroup">
-        <ng-template matStepLabel>Questionnaire</ng-template>
-  
+      <form *ngIf="firstFormGroup"  [formGroup]="firstFormGroup">
+        
         
         <div class="form-row">
             <mat-form-field appearance="fill" class="wf-field">
@@ -67,43 +57,35 @@
                 <textarea matInput formControlName="samplingData" rows="3"></textarea>
             </mat-form-field>
         </div>
+        
+        <ng-container *ngIf="showBranchDetails">
+            <div class="form-row">
+                <mat-form-field appearance="fill" class="wf-field">
+                    <mat-label>JIRA No</mat-label>
+                    <input type="text" matInput formControlName="jiraNo"/>
+                </mat-form-field>
+        
+            </div>
+    
+            <div class="form-row">
+                <mat-form-field appearance="fill" class="wf-field">
+                    <mat-label>Base Branch Name</mat-label>
+                    <input type="text" matInput formControlName="baseBranch"/>
+                  </mat-form-field>
+    
+                <mat-form-field appearance="fill" class="wf-field">
+                    <mat-label>New On-boaring Branch Name</mat-label>
+                    <input type="text" matInput formControlName="newBranch"/>
+                  </mat-form-field>
+            </div>
+        </ng-container>
+
+        
        
 
-        <div style="float: right;"> 
-          <button mat-button matStepperNext>Next</button>
+        <div style="float: right;" *ngIf="firstFormGroup.enabled"> 
+           <button mat-button [disabled]="firstFormGroup.invalid || submitAction || !firstFormGroup.get('jiraNo')?.value || !firstFormGroup.get('newBranch')?.value ||
+           !firstFormGroup.get('baseBranch')?.value" color="primary" (click)="submit();">Submit</button>
         </div>
       </form>
-    </mat-step>
-  
-    <mat-step [stepControl]="secondFormGroup">
-      <form [formGroup]="secondFormGroup">
-        <ng-template matStepLabel>Branch Details</ng-template>
-
-        <div class="form-row">
-            <mat-form-field appearance="fill" class="wf-field">
-                <mat-label>JIRA No</mat-label>
-                <input type="text" matInput formControlName="jiraNo"/>
-            </mat-form-field>
-    
-        </div>
-
-        <div class="form-row">
-            <mat-form-field appearance="fill" class="wf-field">
-                <mat-label>Base Branch Name</mat-label>
-                <input type="text" matInput formControlName="baseBranch"/>
-              </mat-form-field>
-
-            <mat-form-field appearance="fill" class="wf-field">
-                <mat-label>New On-boaring Branch Name</mat-label>
-                <input type="text" matInput formControlName="newBranch"/>
-              </mat-form-field>
-        </div>
-  
-        <div style="float: right;">
-          <button mat-button matStepperPrevious>Back</button>
-          <button mat-button [disabled]="firstFormGroup.invalid || secondFormGroup.invalid || submitAction" color="primary" (click)="submit();">Submit</button>
-        </div>
-      </form>
-    </mat-step>
-  </mat-horizontal-stepper>
   

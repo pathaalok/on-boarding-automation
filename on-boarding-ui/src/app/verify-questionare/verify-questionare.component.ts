@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { SubmitQuestionareComponent } from '../submit-questionare/submit-questionare.component';
 
 
 interface QuestionData {
@@ -26,6 +27,7 @@ interface QuestionData {
     MatInputModule,
     MatButtonModule,
     MatExpansionModule,
+    SubmitQuestionareComponent
   ],
   templateUrl: './verify-questionare.component.html',
   styleUrls: ['./verify-questionare.component.scss'],
@@ -37,6 +39,7 @@ export class VerifyQuestionareComponent implements OnInit {
 
   allQuestionares: Record<string, QuestionData> = {};
   validationData: any;
+  questionareFormState:any = "Disable";
 
   constructor(private http: HttpClient) {}
 
@@ -68,14 +71,14 @@ export class VerifyQuestionareComponent implements OnInit {
   proceedToSubmit(questionId: string){
     let payload = this.allQuestionares[questionId]
     this.http.post<any>('http://localhost:8000/store_submit_qa', payload).subscribe(res => {
-      this.deleteQuestionare(questionId);
+      this.deleteVerifyQuestionare(questionId);
     });
   }
 
-  deleteQuestionare(questionId: string) {
+  deleteVerifyQuestionare(questionId: string) {
     this.http.delete('http://localhost:8000/verify_qa/'+questionId).subscribe((res:any) => {
       this.allQuestionares = res;
-      this.openSnackBar("Action successfully processed","");
+      this.openSnackBar("Action successfully","");
     });
   }
 
@@ -83,6 +86,14 @@ export class VerifyQuestionareComponent implements OnInit {
     this._snackBar.open(message,action,{
       duration: 5000
     });
+  }
+
+  onPanelOpened(questionare:any){
+    this.validationData = [];
+  }
+
+  onPanelClosed(questionare:any){
+    this.validationData = [];
   }
 
 }
