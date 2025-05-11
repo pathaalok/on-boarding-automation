@@ -149,15 +149,16 @@ def update_or_create_file(updated_content: str, branch_name: str,file_path:str,j
         print(f"Error updating {file_path}: {e}")
 
 
-def extract_yaml_content(text: str) -> str:
-    yaml_match = re.search(r"```yaml(.*?)```", text, re.DOTALL)
-    if yaml_match:
-        return yaml_match.group(1).strip()
+def extract_format_content(text: str, format: str) -> str:
+    pattern = rf"```{re.escape(format)}(.*?)```"
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
     else:
         return text.strip()
 
 # --- OPEN AI LLM Helpers ---
-def call_openai(system_prompt: str, user_prompt: str) -> str:
+def call_openai(system_prompt: str, user_prompt: str,format :str) -> str:
    
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -167,35 +168,38 @@ def call_openai(system_prompt: str, user_prompt: str) -> str:
         ]
     )
     raw_content = response.choices[0].message.content
-    yaml_content = extract_yaml_content(raw_content)
+    yaml_content = extract_format_content(raw_content,format)
     return yaml_content
 
 # --- GEMINI AI LLM Helpers ---
 
-def call_gemini(system_prompt: str, user_prompt: str) -> str:
+def call_gemini(system_prompt: str, user_prompt: str,format :str) -> str:
    
     full_prompt = f"{system_prompt.strip()}\n\n{user_prompt.strip()}"
+
+    # print(full_prompt)
 
     model = genai.GenerativeModel("gemini-1.5-flash")
 
     response = model.generate_content(full_prompt)
-    return extract_yaml_content(response.text)
+    return extract_format_content(response.text,format)
 
 # --- LLM Helpers ---
-def call_ai_model(system_prompt: str, user_prompt: str) -> str:
-    # print(f"system_prompt {system_prompt}")
-    # print(f"user_prompt {user_prompt}")
+def call_ai_model(system_prompt: str, user_prompt: str,format: str) -> str:
 
     if model == "GEMINI":
-        return call_gemini(system_prompt,user_prompt)
+        return call_gemini(system_prompt,user_prompt,format)
     else:
-        return call_openai(system_prompt,user_prompt)
+        return call_openai(system_prompt,user_prompt,format)
 
 
-def build_user_prompt(state: QAState) -> str:
-    prompt_parts = ["INPUT DATA : "]
+def build_user_prompt(state: dict) -> str:
+    print(state)
+    prompt_parts = ["INPUT DATA:"]
     for i, question in enumerate(state["questions"]):
-        answer = state["answers"].get(i, "(no answer)")
+        answer = state["answers"].get(i)
+        if answer is None:
+            answer = state["answers"].get(str(i), "(no answer)")
         prompt_parts.append(f"Q{i+1}: {question}\nA{i+1}: {answer}")
     return "\n\n".join(prompt_parts)
 
@@ -232,7 +236,7 @@ def call_llm_for_sor_codes(state: QAState) -> QAState:
         \n\n{state["sor_codes_content"]}
     """
     user_prompt = build_user_prompt(state)
-    updated_sor_codes = call_ai_model(system_prompt, user_prompt)
+    updated_sor_codes = call_ai_model(system_prompt, user_prompt,"yaml")
     print(f"updated_sor_codes YAML.")
     stream_message_to_ui(f"updated sor_codes from AI Model.")
     state["updated_sor_codes"] = updated_sor_codes
@@ -282,7 +286,7 @@ def call_llm_for_rules(state: QAState) -> QAState:
         \n\n{state["rules_content"]}
     """
     user_prompt = build_user_prompt(state)
-    updated_rules = call_ai_model(system_prompt, user_prompt)
+    updated_rules = call_ai_model(system_prompt, user_prompt,"yaml")
     print(" updated_rules YAML.")
     stream_message_to_ui(" updated rules YAML from AI Model.")
     state["updated_rules"] = updated_rules
@@ -348,7 +352,7 @@ def call_llm_for_bu_on_boarding(state: QAState) -> QAState:
         \n\n{state["bu_on_boarding_content"]}
     """
     user_prompt = build_user_prompt(state)
-    updated_bu_on_boarding = call_ai_model(system_prompt, user_prompt)
+    updated_bu_on_boarding = call_ai_model(system_prompt, user_prompt,"yaml")
     print(" updated bu_on_boarding YAML.")
     stream_message_to_ui(" updated BU ON BOARDING YAML from AI Model.")
     state["updated_bu_on_boarding"] = updated_bu_on_boarding

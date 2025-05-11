@@ -8,7 +8,7 @@ from submit_on_boarding_service import run_langgraph, QAState,event_stream
 from fastapi.responses import StreamingResponse
 import google.generativeai as genai
 import uuid
-
+from submit_on_boarding_service import fetch_content,build_user_prompt,call_ai_model
 
 # Load environment variables
 load_dotenv()
@@ -24,6 +24,7 @@ app.add_middleware(
 )
 
 
+rule_file = os.getenv("RULES_YML") 
 
 # Set up Gemini API
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -39,21 +40,21 @@ sessions = {}
 # Define list of questions
 questions = [
     "Enter Partition?",
-    # "Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)",
-    # "Enter BUS UNIT",
-    # "Enter RCC RULES",
-    # "Enter Sampling Rule Ref",
-    # 'Enter Sampling Id',
+    "Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)",
+    "Enter BUS UNIT",
+    "Enter RCC RULES",
+    "Enter Sampling Rule Ref",
+    'Enter Sampling Id',
     'Enter Sampling Data'
 ]
 
 full_prompts = [
     "Enter Partition ( P0, P1, P2, P3, P4, P5)",
-    # "Enter Eligible SOR Codes (Example Format: ACCT/SOR,DEAL/SOR)",
-    # "Enter BUS UNIT ",
-    # "Enter RCC RULES ",
-    # "Enter Sampling Rule Ref ",
-    # 'Enter Sampling Id ',
+    "Enter Eligible SOR Codes (Example Format: ACCT/SOR,DEAL/SOR)",
+    "Enter BUS UNIT ",
+    "Enter RCC RULES ",
+    "Enter Sampling Rule Ref ",
+    'Enter Sampling Id ',
     'Enter Sampling Data '
 ]
 
@@ -193,7 +194,8 @@ class VerifyQAInput(BaseModel):
     answers: Dict[int, str]
 
 verify_qa_store = {
-    "test":{"questions":["Enter Partition?","Enter Sampling Data"],"answers":{"0":"p1","1":"123"}}
+    "test":{"questions":["Enter Partition?","Enter Sampling Data"],"answers":{"0":"p1","1":"123"}},
+    "test2":{"questions":["Enter Partition?","Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)","Enter BUS UNIT","Enter RCC RULES","Enter Sampling Rule Ref","Enter Sampling Id","Enter Sampling Data"],"answers":{"0":"P2","1":"ACCT/123","2":"Test","3":"COUNTRY,LOB,TYPE,DOC_CAT,DOC_TYPE,INV_REF,RCC\nCN,LOB1,ACCT,1,12,AlRCC\nUS,LOB1,DEAL,1,,Al1RCC\nUS,,,,123,RCC4","4":"123","5":"123","6":"123"}}
 }
 
 @app.post("/store_verify_qa")
@@ -205,6 +207,56 @@ def store_qa(data: VerifyQAInput):
 @app.get("/all_verify_qa")
 def get_verify_all_qa():
     return verify_qa_store
+
+@app.get("/verify-qa/{session_id}/{branch_name}")
+def verify_qa(session_id: str,branch_name:str):
+    questionare = verify_qa_store.get(session_id)
+    data: QAState = {
+        "questions": questionare.get("questions"),
+        "answers": questionare.get("answers"),
+        "branch": branch_name
+    }
+    print(data)
+    print("=================")
+    rules = fetch_content(branch_name,rule_file)
+    system_prompt = f"""
+        You are an expert onboarding verifyinh assistant. You are provided with a RCC rules configurations.
+
+        Partions Info:
+            P0 is Federated
+            P1 to P4 are non Regulated
+            P5 is Regulated
+
+        Rule Types Description :
+            non_regulated_rccRule (when Partition is non Regulated and #COUNTRY|LOB|TYPE|DOC_CAT|DOC_TYPE have data from "RCC RULES" INPUT DATA),
+            inv_ref_id_rccRule (when Partition is Regulated and #COUNTRY|INV_REF have data from "RCC RULES" INPUT DATA),
+            non_regulated_inv_ref_id_rccRule  (when Partition is non Regulated and #COUNTRY|INV_REF have data from "RCC RULES" from INPUT DATA)
+ 
+        
+        You must:
+        - Consider the data only from "RCC RULES" from INPUT DATA
+        - Check whether a given key input for that section is already present. Only report conflicts where an input rule attempts to redefine an existing rule with a different RCC value.
+        - Collect all conflict rules and line numbers from "RCC RULES" from INPUT DATA and give respose in below format
+
+        rule => rule data from RCC Rules input data
+        lineNumber => rule line number from RCC Rules input data
+        
+        [
+            {{
+                'rule':'',
+                'lineNumber':'',
+                'existingRcc': '',
+                'inputRcc': ''
+            }}
+        ]
+         
+        \n\n{rules}
+    """
+    user_prompt = build_user_prompt(data)
+    result = call_ai_model(system_prompt, user_prompt,"json")
+    return result
+
+
 
 @app.delete("/verify_qa/{session_id}")
 def get_verify_all_qa(session_id: str):

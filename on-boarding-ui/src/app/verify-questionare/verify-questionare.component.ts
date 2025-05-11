@@ -51,7 +51,15 @@ export class VerifyQuestionareComponent implements OnInit {
 
   verifyDataConflicts(questionId: string) {
     const session = this.allQuestionares[questionId];
-    alert(`Verified session: ${questionId}`);
+    this.http.get('http://localhost:8000/verify-qa/'+questionId+'/main').subscribe((res:any) => {
+      res = JSON.parse(res)
+      if(res.length == 0){
+        this.openSnackBar("No Conflicts","");
+      }else{
+        this.openSnackBar("Conflicts Present","");
+      }
+
+    });
   }
 
   proceedToSubmit(questionId: string){
