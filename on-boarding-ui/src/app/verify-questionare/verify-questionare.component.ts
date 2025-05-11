@@ -36,6 +36,7 @@ export class VerifyQuestionareComponent implements OnInit {
   private _snackBar = inject(MatSnackBar);
 
   allQuestionares: Record<string, QuestionData> = {};
+  validationData: any;
 
   constructor(private http: HttpClient) {}
 
@@ -52,11 +53,13 @@ export class VerifyQuestionareComponent implements OnInit {
   verifyDataConflicts(questionId: string) {
     const session = this.allQuestionares[questionId];
     this.http.get('http://localhost:8000/verify-qa/'+questionId+'/main').subscribe((res:any) => {
-      res = JSON.parse(res)
+      res = JSON.parse(res);
+      this.validationData = res;
       if(res.length == 0){
         this.openSnackBar("No Conflicts","");
       }else{
         this.openSnackBar("Conflicts Present","");
+        
       }
 
     });
