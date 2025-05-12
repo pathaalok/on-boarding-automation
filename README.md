@@ -64,6 +64,10 @@ To start application : ng serve
 
 URL: http://localhost:4200/
 
+Side Nav: 
+![image](https://github.com/user-attachments/assets/ff4692bb-4cf5-4d28-85e9-487562073e5a)
+
+
 On Boarding Chatbot:
 ![image](https://github.com/user-attachments/assets/dec09afd-72f7-49fd-a964-e211d840832e)
 
