@@ -8,7 +8,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          On Boarding Name : {{ questionare.key }}
+          On Boarding Name : {{ questionare.value.answers[0] }}
         </mat-panel-title>
       </mat-expansion-panel-header>
   
@@ -45,14 +45,8 @@
           </table>
       </div>
       <br>
-      <app-submit-questionare [questionareFormState]="questionareFormState" [questionare]="questionare.value"> </app-submit-questionare>
+      <app-submit-questionare [questionareFormState]="questionareFormState" [questionare]="questionare"> </app-submit-questionare>
 
-      <!-- <div *ngFor="let question of questionare?.value?.questions; let i = index">
-        <p><strong>Q:</strong> {{ question }}</p>
-
-        <pre><strong>A:</strong> {{ questionare.value.answers[i.toString()] }}</pre>
-        <hr />
-      </div> -->
     </mat-expansion-panel>
   </div>
 </div>

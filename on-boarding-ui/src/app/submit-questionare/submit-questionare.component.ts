@@ -37,17 +37,19 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
 
 
   questionToFormControlMap: { [key: string]: string } = {
-    "0": "partition",
-    "1": "sorCodes",
-    "2": "busUnit",
-    "3": "rccRules",
-    "4": "samplingRuleRef",
-    "5": "samplingId",
-    "6": "samplingData"
+    "0": "onBoardingName",
+    "1": "partition",
+    "2": "sorCodes",
+    "3": "busUnit",
+    "4": "rccRules",
+    "5": "samplingRuleRef",
+    "6": "samplingId",
+    "7": "samplingData"
   };
 
   constructor(private fb: FormBuilder,private http: HttpClient,public eventStreamService: EventStreamService) {
     this.firstFormGroup = this.fb.group({
+      onBoardingName: ['', Validators.required],
       partition: ['', Validators.required],
       sorCodes: ['', Validators.required],
       busUnit: ['', Validators.required],
@@ -94,18 +96,19 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
   }
 
   generatePayload() {
-    const questions = this.questionare.questions;
+    const questions = this.questionare.value.questions;
   
     const firstValues = this.firstFormGroup.getRawValue();
   
     const answers = {
-      "0": firstValues.partition,
-      "1": firstValues.sorCodes,
-      "2": firstValues.busUnit,
-      "3": firstValues.rccRules,
-      "4": firstValues.samplingRuleRef,
-      "5": firstValues.samplingId,
-      "6": firstValues.samplingData
+      "0": firstValues.onBoardingName,
+      "1": firstValues.partition,
+      "2": firstValues.sorCodes,
+      "3": firstValues.busUnit,
+      "4": firstValues.rccRules,
+      "5": firstValues.samplingRuleRef,
+      "6": firstValues.samplingId,
+      "7": firstValues.samplingData
     };
   
     const payload = {

@@ -39,6 +39,7 @@ sessions = {}
 
 # Define list of questions
 questions = [
+    "Enter On Boarding Name",
     "Enter Partition ? (P0, P1, P2, P3, P4, P5)",
     "Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)",
     "Enter BUS UNIT",
@@ -48,23 +49,10 @@ questions = [
     'Enter Sampling Data'
 ]
 
-# full_prompts = [
-#     "Enter Partition (P0, P1, P2, P3, P4, P5)",
-#     "Enter Eligible SOR Codes (Example Format: ACCT/SOR,DEAL/SOR)",
-#     "Enter BUS UNIT ",
-#     "Enter RCC RULES ",
-#     "Enter Sampling Rule Ref ",
-#     'Enter Sampling Id ',
-#     'Enter Sampling Data '
-# ]
-
 class UserMessage(BaseModel):
     session_id: str
     message: str
     edit_index: int = None
-
-    
-        # 2. **SOR Codes**: Must follow this format: ACCT/SOR,DEAL/SOR (one or more items, comma-separated).
 
 @app.post("/start")
 def start_conversation():
@@ -78,7 +66,8 @@ def start_conversation():
         Wait for the user's response before continuing. 
 
         ### Validation Rules:
-        1. **Partition**: Only accept one of P0, P1, P2, P3, P4, P5. Reject and re-ask if invalid.
+        - **Partition**: Only accept one of P0, P1, P2, P3, P4, P5. Reject and re-ask if invalid.
+        - **SOR Codes**: Must follow this format: ACCT/SOR,DEAL/SOR (one or more items, comma-separated).
 
         ### Behavior:
         - If an answer is invalid, **explain the error** and **re-ask the same question**.
@@ -193,13 +182,8 @@ class VerifyQAInput(BaseModel):
     questions: List[str]
     answers: Dict[int, str]
 
-  # "test2":{"questions":["Enter Partition?","Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)","Enter BUS UNIT","Enter RCC RULES","Enter Sampling Rule Ref","Enter Sampling Id","Enter Sampling Data"],"answers":{"0":"P2","1":"ACCT/123","2":"Test","3":"COUNTRY,LOB,TYPE,DOC_CAT,DOC_TYPE,INV_REF,RCC\nCN,LOB1,ACCT,1,12,AlRCC\nUS,LOB1,DEAL,1,,Al1RCC\nUS,,,,123,RCC4","4":"123","5":"123","6":"123"}}
-
-
 verify_qa_store = {
 }
-
-  
 
 @app.post("/store_verify_qa")
 def store_qa(data: VerifyQAInput):
