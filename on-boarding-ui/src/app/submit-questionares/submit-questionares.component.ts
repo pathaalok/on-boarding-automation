@@ -70,5 +70,11 @@ export class SubmitQuestionaresComponent implements OnInit {
     });
   }
 
+  formSubmit(event:any){
+    this.http.delete('http://localhost:8000/submit_qa/'+event.key).subscribe((res:any) => {
+      this.allQuestionares = res;
+    });
+  }
+
 
 }

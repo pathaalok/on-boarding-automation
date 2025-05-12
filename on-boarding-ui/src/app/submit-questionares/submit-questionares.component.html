@@ -19,7 +19,9 @@
           </mat-expansion-panel-header>
       
     
-          <app-submit-questionare [questionare]="questionare.value" [questionareFormState]="questionareFormState" [showBranchDetails]="true"> </app-submit-questionare>
+          <app-submit-questionare [questionare]="questionare" [questionareFormState]="questionareFormState" [showBranchDetails]="true"
+          (formSubmit)="formSubmit($event)"
+          > </app-submit-questionare>
         </mat-expansion-panel>
       </div>
     </div>

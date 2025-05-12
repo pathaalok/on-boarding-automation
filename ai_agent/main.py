@@ -39,7 +39,7 @@ sessions = {}
 
 # Define list of questions
 questions = [
-    "Enter Partition?",
+    "Enter Partition ? (P0, P1, P2, P3, P4, P5)",
     "Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)",
     "Enter BUS UNIT",
     "Enter RCC RULES",
@@ -48,15 +48,15 @@ questions = [
     'Enter Sampling Data'
 ]
 
-full_prompts = [
-    "Enter Partition ( P0, P1, P2, P3, P4, P5)",
-    "Enter Eligible SOR Codes (Example Format: ACCT/SOR,DEAL/SOR)",
-    "Enter BUS UNIT ",
-    "Enter RCC RULES ",
-    "Enter Sampling Rule Ref ",
-    'Enter Sampling Id ',
-    'Enter Sampling Data '
-]
+# full_prompts = [
+#     "Enter Partition (P0, P1, P2, P3, P4, P5)",
+#     "Enter Eligible SOR Codes (Example Format: ACCT/SOR,DEAL/SOR)",
+#     "Enter BUS UNIT ",
+#     "Enter RCC RULES ",
+#     "Enter Sampling Rule Ref ",
+#     'Enter Sampling Id ',
+#     'Enter Sampling Data '
+# ]
 
 class UserMessage(BaseModel):
     session_id: str
@@ -71,7 +71,7 @@ def start_conversation():
     convo = model.start_chat(history=[])
     session_id = str(id(convo))
 
-    questions_text = "\n".join([f"{i+1}. {q}" for i, q in enumerate(full_prompts)])
+    questions_text = "\n".join([f"{i+1}. {q}" for i, q in enumerate(questions)])
 
     prompt = f"""
         You are a validation assistant. Ask the following questions **one-by-one**. 
@@ -92,10 +92,10 @@ def start_conversation():
     convo.send_message(prompt)
     sessions[session_id] = {
         "convo": convo,
-        "answers": [None] * len(full_prompts),
+        "answers": [None] * len(questions),
         "index": 0,
         "confirmed": False,
-        "history": [[] for _ in full_prompts]
+        "history": [[] for _ in questions]
     }
     return {"session_id": session_id, "question": convo.last.text}
 
@@ -124,7 +124,7 @@ def process_message(user_msg: UserMessage):
     # Handle edit mode
     if user_msg.edit_index is not None:
         index = user_msg.edit_index
-        question = full_prompts[index]
+        question = questions[index]
 
         # Tell Gemini what is being edited
         convo.send_message(f"Revisiting this question:\n{question}\nUser answered: {user_msg.message}")
@@ -134,7 +134,7 @@ def process_message(user_msg: UserMessage):
         if "invalid" in bot_response.lower() or "please re-enter" in bot_response.lower():
             return {
                 "response": bot_response,
-                "question": full_prompts[index]
+                "question": questions[index]
             }
 
         # Save new answer and update history
@@ -157,11 +157,11 @@ def process_message(user_msg: UserMessage):
     if "invalid" in bot_response.lower() or "please re-enter" in bot_response.lower():
         return {
             "response": bot_response,
-            "question": full_prompts[index]
+            "question": questions[index]
         }
 
     # Save valid answer
-    if 0 <= index < len(full_prompts):
+    if 0 <= index < len(questions):
         session["answers"][index] = {"user": user_msg.message, "bot": bot_response}
         session["history"][index].append(user_msg.message)
 
@@ -169,7 +169,7 @@ def process_message(user_msg: UserMessage):
     session["index"] += 1
 
     # If all questions answered, show preview
-    if session["index"] >= len(full_prompts):
+    if session["index"] >= len(questions):
         formatted_answers = {str(i): ans["user"] for i, ans in enumerate(session["answers"])}
         return {
             "response": "Here are your answers. Please review and confirm:",
@@ -183,7 +183,7 @@ def process_message(user_msg: UserMessage):
 
     # Otherwise, continue to next question
     return {
-        "response": full_prompts[session["index"]]
+        "response": questions[session["index"]]
     }
 
 
@@ -193,9 +193,13 @@ class VerifyQAInput(BaseModel):
     questions: List[str]
     answers: Dict[int, str]
 
+  # "test2":{"questions":["Enter Partition?","Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)","Enter BUS UNIT","Enter RCC RULES","Enter Sampling Rule Ref","Enter Sampling Id","Enter Sampling Data"],"answers":{"0":"P2","1":"ACCT/123","2":"Test","3":"COUNTRY,LOB,TYPE,DOC_CAT,DOC_TYPE,INV_REF,RCC\nCN,LOB1,ACCT,1,12,AlRCC\nUS,LOB1,DEAL,1,,Al1RCC\nUS,,,,123,RCC4","4":"123","5":"123","6":"123"}}
+
+
 verify_qa_store = {
-    "test2":{"questions":["Enter Partition?","Enter Eligible SOR Codes ? (Example: ACCT/SOR,DEAL/SOR)","Enter BUS UNIT","Enter RCC RULES","Enter Sampling Rule Ref","Enter Sampling Id","Enter Sampling Data"],"answers":{"0":"P2","1":"ACCT/123","2":"Test","3":"COUNTRY,LOB,TYPE,DOC_CAT,DOC_TYPE,INV_REF,RCC\nCN,LOB1,ACCT,1,12,AlRCC\nUS,LOB1,DEAL,1,,Al1RCC\nUS,,,,123,RCC4","4":"123","5":"123","6":"123"}}
 }
+
+  
 
 @app.post("/store_verify_qa")
 def store_qa(data: VerifyQAInput):
@@ -209,10 +213,11 @@ def get_verify_all_qa():
 
 @app.get("/verify-qa/{session_id}/{branch_name}")
 def verify_qa(session_id: str,branch_name:str):
-    questionare = verify_qa_store.get(session_id)
+    print(verify_qa_store)
+    questionare = verify_qa_store.get(str(session_id))
     data: QAState = {
-        "questions": questionare.get("questions"),
-        "answers": questionare.get("answers"),
+        "questions": questionare.questions,
+        "answers": questionare.answers,
         "branch": branch_name
     }
     print(data)
@@ -259,7 +264,7 @@ def verify_qa(session_id: str,branch_name:str):
 
 
 @app.delete("/verify_qa/{session_id}")
-def get_verify_all_qa(session_id: str):
+def delete_verify_qa(session_id: str):
     del verify_qa_store[session_id]
     return verify_qa_store
 
@@ -317,3 +322,9 @@ def submit_qa(data: QAInput):
 
     result = run_langgraph(state)
     return {"status": "completed", "final_state": result}
+
+
+@app.delete("/submit_qa/{session_id}")
+def delete_submit_qa(session_id: str):
+    del submit_qa_store[session_id]
+    return submit_qa_store

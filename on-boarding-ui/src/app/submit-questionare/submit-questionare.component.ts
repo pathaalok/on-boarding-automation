@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -33,6 +33,8 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
   @Input() questionareFormState: any;
   @Input() showBranchDetails:any ;
 
+  @Output() formSubmit = new EventEmitter<any>();
+
 
   questionToFormControlMap: { [key: string]: string } = {
     "0": "partition",
@@ -62,7 +64,7 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['questionare'] && this.questionare) {
-      this.patchAnswersToForm(this.questionare.answers);
+      this.patchAnswersToForm(this.questionare.value.answers);
     }
 
     if (changes['questionareFormState'] && this.questionareFormState) {
@@ -94,7 +96,7 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
   generatePayload() {
     const questions = this.questionare.questions;
   
-    const firstValues = this.firstFormGroup.value;
+    const firstValues = this.firstFormGroup.getRawValue();
   
     const answers = {
       "0": firstValues.partition,
@@ -129,6 +131,7 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
         console.log('Success:', response);
         this.openSnackBar('Onboarding submitted successfully!','');
         this.eventStreamService.events.push('Onboarding submitted successfully!');
+        this.formSubmit.emit({status:"Success",key:this.questionare.key})
         setTimeout(()=>{
           this.eventStreamService.events = [];
         },7500)
