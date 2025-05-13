@@ -64,10 +64,20 @@ To start application : ng serve
 
 URL: http://localhost:4200/
 
-Initial Screen:
+Side Nav: 
+![image](https://github.com/user-attachments/assets/ff4692bb-4cf5-4d28-85e9-487562073e5a)
 
-![image](https://github.com/user-attachments/assets/60d6278f-2f04-4b59-a083-8ac6ba55ae2c)
 
+On Boarding Chatbot:
+![image](https://github.com/user-attachments/assets/dec09afd-72f7-49fd-a964-e211d840832e)
+
+On Boarding Verify screen:
+![image](https://github.com/user-attachments/assets/a20cb1a7-17ad-4671-a768-ddf018879043)
+
+
+Submit Screen:
+
+![image](https://github.com/user-attachments/assets/a2e177d0-a25e-448c-b8a1-d854e96de796)
 
 
 On submission events will be displayed in real time:
