@@ -15,14 +15,23 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
 	implementation 'de.codecentric:spring-boot-admin-starter-client:3.1.0'
 
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+//	testImplementation 'io.cucumber:cucumber-java:7.14.0'
+//	testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+//	testImplementation 'io.cucumber:cucumber-junit:7.14.0'
+//	testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.14.0'
+//	testImplementation 'org.junit.platform:junit-platform-suite-api:1.10.2'
+//	testImplementation 'org.springframework.boot:spring-boot-test'
+//	testImplementation 'org.springframework.boot:spring-boot-test-autoconfigure'
+//	testImplementation 'org.springframework:spring-web'
+
 	testImplementation 'io.cucumber:cucumber-java:7.14.0'
 	testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+	testImplementation 'io.cucumber:cucumber-junit:7.14.0'
 	testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.14.0'
 	testImplementation 'org.junit.platform:junit-platform-suite-api:1.10.2'
-	testImplementation 'org.springframework.boot:spring-boot-test'
-	testImplementation 'org.springframework.boot:spring-boot-test-autoconfigure'
-	testImplementation 'org.springframework:spring-web'
 }
 
 dependencyManagement {
@@ -52,16 +61,22 @@ tasks.register('cucumberTest', Test) {
 	useJUnitPlatform()
 
 	// Only run the Cucumber suite class
-	include '**/CucumberTestSuite.class'
+//	include '**/CucumberTestSuite.class'
 
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
 
-	filter {
-		includeTestsMatching "com.example.bdd.CucumberTestSuite"
-	}
+//	filter {
+//		includeTestsMatching "com.example.bdd.CucumberTestSuite"
+//	}
+
+	include '**/com/example/bdd/CucumberTestSuite.class'  // Make sure this points to your test class
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	shouldRunAfter test
 
 	testLogging {
 		events "passed", "failed", "skipped"
+		showStandardStreams = true
 	}
 }
