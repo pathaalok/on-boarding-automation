@@ -10,6 +10,8 @@ import { EventStreamService } from './event-stream.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { SubmitQuestionareComponent } from '../submit-questionare/submit-questionare.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from './modal-dialog/modal-dialog.component';
 
 interface QuestionData {
   questions: string[];
@@ -27,6 +29,7 @@ interface QuestionData {
     MatInputModule,
     MatButtonModule,
     MatExpansionModule,
+    MatDialogModule,
     SubmitQuestionareComponent
   ],
   templateUrl: './submit-questionares.component.html',
@@ -43,7 +46,7 @@ export class SubmitQuestionaresComponent implements OnInit {
 
   ngOnInit(): void {
     this.eventStreamService.getServerEvents().subscribe({
-      next: (msg) => this.eventStreamService.events.push(msg),
+      next: (msg:any) => this.eventStreamService.events.push(msg),
       error: (err) => console.error('SSE error:', err),
     });
 
@@ -75,6 +78,5 @@ export class SubmitQuestionaresComponent implements OnInit {
       this.allQuestionares = res;
     });
   }
-
 
 }

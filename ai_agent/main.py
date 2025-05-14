@@ -301,7 +301,8 @@ def submit_qa(data: QAInput):
         "updated_rules": "",
         "bu_on_boarding_content": "",
         "updated_bu_on_boarding": "",
-        "abort": False
+        "abort": False,
+        "test_case_report": ""
     }
 
     result = run_langgraph(state)

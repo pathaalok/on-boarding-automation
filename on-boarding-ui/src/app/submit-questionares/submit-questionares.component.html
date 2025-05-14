@@ -2,9 +2,14 @@
 <div class="event-container" *ngIf="eventStreamService?.events.length>0">
        <div class="event" > <label (click)="eventStreamService.events=[];">X</label></div>
        <div class="event" *ngFor="let event of eventStreamService.events">
-           {{ event }}
+         
+       
+          {{ event.message }}
+        
+        
        </div>
 </div>
+
 <div *ngIf="allQuestionares && (allQuestionares | keyvalue).length > 0; else noData">
     <h3>Questionares to Submit</h3>
     <div *ngFor="let questionare of allQuestionares | keyvalue" class="validation-questionare-container">
@@ -20,6 +25,8 @@
       
     
           <app-submit-questionare [questionare]="questionare" [questionareFormState]="questionareFormState" [showBranchDetails]="true"
+          
+          
           (formSubmit)="formSubmit($event)"
           > </app-submit-questionare>
         </mat-expansion-panel>

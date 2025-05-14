@@ -29,6 +29,7 @@ class QAState(TypedDict):
     bu_on_boarding_content: str
     updated_bu_on_boarding: str
     abort: bool
+    test_case_report: str
 
 model = os.getenv("MODEL")
 
@@ -46,6 +47,8 @@ sor_code_file = os.getenv("SOR_CODES_YML")
 rule_file = os.getenv("RULES_YML") 
 bu_on_boarding_file = os.getenv("BU_ON_BOARDING_YML")
 
+test_url = os.getenv("TEST_CASES_URL")
+
 # Queue for SSE
 event_queue = asyncio.Queue() 
 
@@ -58,13 +61,18 @@ async def event_stream():
 async def notify(message):
     await event_queue.put(message)
 
-def stream_message_to_ui(message: str):
+def stream_message_to_ui(message: str,type: str="msg",extraText: str =""):
+    t = {
+            'message' : message,
+            'type' : type,
+            'extraText' : extraText
+        }
     try:
         loop = asyncio.get_running_loop()
-        loop.create_task(notify(message))
+        loop.create_task(notify(t))
     except RuntimeError:
         # Fallback if not in an event loop (e.g., running in sync context)
-        asyncio.run(notify(message))
+        asyncio.run(notify(t))
 
 # --- GitHub Helpers ---
 def check_if_branch_exists(branch_name: str) -> bool:
@@ -84,7 +92,7 @@ def create_base_branch_if_not_exists(state: QAState) -> str:
         default_branch = repo.get_branch(repo.default_branch)
         repo.create_git_ref(ref=f"refs/heads/{base_branch}", sha=default_branch.commit.sha)
         print(f"Created base branch: {base_branch}")
-        stream_message_to_ui(f"Created base branch: {base_branch}")
+        stream_message_to_ui(f"Created base branch: {base_branch}","msg")
     else:
         print(f"base branch '{base_branch}' already exists.")
         stream_message_to_ui(f"base branch '{base_branch}' already exists.")
@@ -421,6 +429,50 @@ def call_api_to_update_config(state: QAState) -> QAState:
 
     return state
 
+def call_api_to_trigger_test_cases(state: QAState) -> QAState:
+
+    admin_url = f"{app_admin_service_url}/instances"
+    print("admin_url:", admin_url)
+
+    response = requests.get(
+            admin_url,
+            auth=HTTPBasicAuth("admin", "adminpassword")  
+        )
+    response.raise_for_status()
+    instances = response.json()
+
+        # Extract service URLs for matching appName
+    matching_urls = [
+            registration["serviceUrl"]
+            for instance in instances
+            if (registration := instance.get("registration"))
+            and registration.get("name", "").lower() == app_service_name.lower()
+    ]
+
+    print("Matching instance URLs:", matching_urls)
+
+    test_case_url = f"{matching_urls[0]}{test_url}"
+    print("test_case_url:", test_case_url)
+    stream_message_to_ui("Test Cases execution inprogess")
+    try:
+        # Add basic authentication credentials
+        response = requests.get(
+            test_case_url,
+            auth=HTTPBasicAuth("admin", "adminpassword")  
+        )
+        response.raise_for_status()
+        response_text =  response.text
+        stream_message_to_ui("Test Cases executed")
+        state["test_case_report"]  = response_text
+
+    except Exception as e:
+        print(f"Error fetching instances: {e}")
+        stream_message_to_ui("Test Cases execution failed")
+
+    return state
+
+
+
 
 # --- LangGraph Flow ---
 
@@ -448,6 +500,8 @@ graph.add_node("create_pr", create_pr_node)
 
 graph.add_node("call_api_to_update_config", call_api_to_update_config)
 
+graph.add_node("call_api_to_trigger_test_cases", call_api_to_trigger_test_cases)
+
 graph.add_edge(START, "create_base_branch")
 
 
@@ -474,8 +528,9 @@ graph.add_edge("call_llm_for_bu_on_boarding", "update_bu_on_boarding_file")
 
 graph.add_edge("update_bu_on_boarding_file", "create_pr")
 graph.add_edge("create_pr", "call_api_to_update_config")
+graph.add_edge("call_api_to_update_config", "call_api_to_trigger_test_cases")
 
-graph.add_edge("call_api_to_update_config", END)
+graph.add_edge("call_api_to_trigger_test_cases", END)
 
 def run_langgraph(state: QAState):
     compiled_graph = graph.compile()

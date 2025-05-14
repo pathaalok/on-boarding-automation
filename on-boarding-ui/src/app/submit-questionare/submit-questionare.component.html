@@ -2,6 +2,9 @@
       <form *ngIf="firstFormGroup"  [formGroup]="firstFormGroup">
         
         
+        <p style="cursor: pointer;color: red;" *ngIf="finalJson?.final_state?.test_case_report" 
+        (click)="openReport();">Show Report</p> 
+
         <div class="form-row">
             <mat-form-field appearance="fill" class="wf-field">
                 <mat-label>Partition</mat-label>

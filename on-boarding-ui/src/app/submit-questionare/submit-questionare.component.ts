@@ -8,6 +8,8 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EventStreamService } from '../submit-questionares/event-stream.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../submit-questionares/modal-dialog/modal-dialog.component';
 
 @Component({
   selector: 'app-submit-questionare',
@@ -47,7 +49,10 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
     "7": "samplingData"
   };
 
-  constructor(private fb: FormBuilder,private http: HttpClient,public eventStreamService: EventStreamService) {
+  finalJson: any;
+
+  constructor(private fb: FormBuilder,private http: HttpClient,public eventStreamService: EventStreamService,
+    private dialog: MatDialog) {
     this.firstFormGroup = this.fb.group({
       onBoardingName: ['', Validators.required],
       partition: ['', Validators.required],
@@ -132,9 +137,8 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
     this.http.post('http://localhost:8000/questionare', payload).subscribe({
       next: (response) => {
         console.log('Success:', response);
-        this.openSnackBar('Onboarding submitted successfully!','');
-        this.eventStreamService.events.push('Onboarding submitted successfully!');
-        this.formSubmit.emit({status:"Success",key:this.questionare.key})
+        this.finalJson = response;
+        // this.formSubmit.emit({status:"Success",key:this.questionare.key})
         setTimeout(()=>{
           this.eventStreamService.events = [];
         },7500)
@@ -156,5 +160,15 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
     });
   }
 
+
+  openReport(){
+    this.dialog.open(ConfirmDialogComponent, {
+      minWidth: '75vw',
+      minHeight: '600px',
+      data: {
+        event: this.finalJson?.final_state?.test_case_report
+      }
+    });
+  }
 
 }

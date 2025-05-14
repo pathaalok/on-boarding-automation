@@ -10,13 +10,13 @@ export class EventStreamService {
   
   events:any = [];
   
-  getServerEvents(): Observable<string> {
-    return new Observable<string>((observer) => {
+  getServerEvents(): Observable<any> {
+    return new Observable<any>((observer) => {
       const eventSource = new EventSource('http://localhost:8000/events'); // Adjust if needed
 
       eventSource.onmessage = (event) => {
         this.ngZone.run(() => {
-          observer.next(event.data);
+          observer.next(JSON.parse(event.data.replace(/'/g, '"')));
         });
       };
 

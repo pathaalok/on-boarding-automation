@@ -140,7 +140,6 @@ public class ConfigController {
                 }
 
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE)
                         .body(content);
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
