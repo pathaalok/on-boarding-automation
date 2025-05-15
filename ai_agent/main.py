@@ -191,6 +191,12 @@ def store_qa(data: VerifyQAInput):
     verify_qa_store[session_id] = data
     return {"session_id": session_id, "message": "QA data stored successfully"}
 
+
+@app.put("/store_verify_qa/{session_id}")
+def store_qa(session_id: str,data: VerifyQAInput):
+    verify_qa_store[session_id] = data
+    return {"session_id": session_id, "message": "QA data stored successfully"}
+
 @app.get("/all_verify_qa")
 def get_verify_all_qa():
     return verify_qa_store
@@ -208,7 +214,9 @@ def verify_qa(session_id: str,branch_name:str):
     print("=================")
     rules = fetch_content(branch_name,rule_file)
     system_prompt = f"""
-        You are an expert onboarding verifyinh assistant. You are provided with a RCC rules configurations.
+        You are an expert onboarding verification assistant.  Your task is to identify RCC rule conflicts based on provided data.  Follow these steps precisely:
+
+**Data:**
 
         Partions Info:
             P0 is Federated
@@ -216,30 +224,47 @@ def verify_qa(session_id: str,branch_name:str):
             P5 is Regulated
 
         Rule Types Description :
-            non_regulated_rccRule (when Partition is non Regulated and #COUNTRY|LOB|TYPE|DOC_CAT|DOC_TYPE have data from "RCC RULES" INPUT DATA),
-            inv_ref_id_rccRule (when Partition is Regulated and #COUNTRY|INV_REF have data from "RCC RULES" INPUT DATA),
-            non_regulated_inv_ref_id_rccRule  (when Partition is non Regulated and #COUNTRY|INV_REF have data from "RCC RULES" from INPUT DATA)
+            non_regulated_rccRule (when Partition is non Regulated and COUNTRY|LOB|TYPE|DOC_CAT|DOC_TYPE have data from "RCC RULES" INPUT DATA),
+            inv_ref_id_rccRule (when Partition is Regulated and COUNTRY|INV_REF have data from "RCC RULES" INPUT DATA),
+            non_regulated_inv_ref_id_rccRule  (when Partition is non Regulated and COUNTRY|INV_REF have data from "RCC RULES" from INPUT DATA)
  
         
-        You must:
-        - Consider the data only from "RCC RULES" from INPUT DATA
-        - Check whether a given key input for that section is already present. 
-        - Only report conflicts where an input rule attempts to redefine an existing rule with a different RCC value.
-        - Collect all conflict rules and line numbers from "RCC RULES" from INPUT DATA and give respose in below format
+       
 
-        rule => rule data from RCC Rules input data
-        lineNumber => rule line number from RCC Rules input data
+**Conflict Detection Algorithm:**
+
+1. **Partition Determination:** Determine the partition type (Federated, Regulated, Non-Regulated) from the INPUT DATA's.
+
+2. **Rule Type Selection:** For each line in the "RCC RULES" input data (Q5), determine the appropriate rule type based on the populated fields and the partition type:
+    * `non_regulated_rccRule`:  Partition is Non-Regulated AND COUNTRY|LOB|TYPE|DOC_CAT|DOC_TYPE are populated.
+    * `inv_ref_id_rccRule`: Partition is Regulated AND COUNTRY|INV_REF are populated.
+    * `non_regulated_inv_ref_id_rccRule`: Partition is Non-Regulated AND COUNTRY|INV_REF are populated.
+
+3. **Key Generation:**  For each line, construct the key string based on the selected rule type's required fields.  Use square brackets `[]` and pipe symbols `|` as delimiters.  For example: `[US|LOB1|ACCT|11|11]` or `[US|123]`.
+
+4. **Conflict Detection:** Compare each generated key against the keys in the corresponding rule type within the "Existing Rules".  A conflict exists ONLY if:
+    * The key is should be exactly same (dont assume alike or similar) in both the "Existing Rules" and the "RCC RULES" input data and the RCC values are different.
+    * Double check while considering it as conflict.
+
+5. **Output:**  Report conflicts in the specified JSON format, including the original rule line, line number, existing RCC value, input RCC value and Reason for conflict.  If no conflicts are found, return an empty JSON array: `[]`.
+
+**Perform conflict detection using the provided data and algorithm.  Show your work by explicitly stating the rule type, key, and conflict determination for each line in the RCC RULES input data.**
         
         [
             {{
-                'rule':'',
-                'lineNumber':'',
-                'existingRcc': '',
-                'inputRcc': ''
+                "rule": "original CSV line from RCC RULES",
+                "lineNumber": "line number in RCC RULES input",
+                "existingRcc": "value in existing config",
+                "inputRcc": "value in input",
+                "reasonForConflict":"Provide reason for conflict"
             }}
         ]
-         
+
+        \n\n 
+        Existing Rules:
         \n\n{rules}
+
+        \n\n
     """
     user_prompt = build_user_prompt(data)
     result = call_ai_model(system_prompt, user_prompt,"json")

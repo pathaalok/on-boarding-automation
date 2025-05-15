@@ -34,6 +34,7 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
   @Input() questionare!:any;
   @Input() questionareFormState: any;
   @Input() showBranchDetails:any ;
+  @Input() flow:any ;
 
   @Output() formSubmit = new EventEmitter<any>();
 
@@ -131,6 +132,8 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
 
 
   submit(){
+
+    
     this.submitAction = true;
     let payload = this.generatePayload();
 
@@ -169,6 +172,11 @@ export class SubmitQuestionareComponent implements OnInit,OnChanges  {
         event: this.finalJson?.final_state?.test_case_report
       }
     });
+  }
+
+  update(){
+    let payload = this.generatePayload();
+    this.formSubmit.emit({value:payload,key:this.questionare.key})
   }
 
 }

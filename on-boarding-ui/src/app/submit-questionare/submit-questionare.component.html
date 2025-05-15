@@ -86,9 +86,13 @@
         
        
 
-        <div style="float: right;" *ngIf="firstFormGroup.enabled"> 
+        <div style="float: right;" *ngIf="flow !== 'Verify'"> 
            <button mat-button [disabled]="firstFormGroup.invalid || submitAction || !firstFormGroup.get('jiraNo')?.value || !firstFormGroup.get('newBranch')?.value ||
            !firstFormGroup.get('baseBranch')?.value" color="primary" (click)="submit();">Submit</button>
         </div>
+
+        <div style="float: right;" *ngIf="flow == 'Verify'"> 
+            <button mat-button [disabled]="firstFormGroup.invalid || submitAction" color="primary" (click)="update();">Update</button>
+         </div>
       </form>
   

@@ -39,7 +39,7 @@ export class VerifyQuestionareComponent implements OnInit {
 
   allQuestionares: Record<string, QuestionData> = {};
   validationData: any;
-  questionareFormState:any = "Disable";
+  questionareFormState:any = "Enable";
 
   constructor(private http: HttpClient) {}
 
@@ -96,4 +96,10 @@ export class VerifyQuestionareComponent implements OnInit {
     this.validationData = [];
   }
 
+
+  updateDataForVerification(event:any){
+    this.http.put<any>('http://localhost:8000/store_verify_qa/'+event.key, event.value).subscribe(res => {
+      this.openSnackBar("Updated successfully","");
+    });
+  }
 }

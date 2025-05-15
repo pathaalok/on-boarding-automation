@@ -95,7 +95,7 @@ def create_base_branch_if_not_exists(state: QAState) -> str:
         stream_message_to_ui(f"Created base branch: {base_branch}","msg")
     else:
         print(f"base branch '{base_branch}' already exists.")
-        stream_message_to_ui(f"base branch '{base_branch}' already exists.")
+        stream_message_to_ui(f"base branch {base_branch} already exists.")
     return base_branch
 
 def create_on_boarding_branch_if_not_exists(state: QAState,base_branch: str) -> str:
@@ -108,7 +108,7 @@ def create_on_boarding_branch_if_not_exists(state: QAState,base_branch: str) -> 
         stream_message_to_ui(f"Created on-boarding branch: {new_branch_name} from {base_branch}")
     else:
         print(f"Branch '{new_branch_name}' already exists.")
-        stream_message_to_ui(f"Branch '{new_branch_name}' already exists.")
+        stream_message_to_ui(f"Branch {new_branch_name} already exists.")
     return new_branch_name
 
 def check_if_pr_exists(new_branch_name: str,base_branch :str) -> bool:
@@ -152,7 +152,7 @@ def update_or_create_file(updated_content: str, branch_name: str,file_path:str,j
         file_sha = file.sha
         repo.update_file(file_path, commit_message, updated_content, file_sha, branch=branch_name)
         print(f"Updated {file_path} in branch {branch_name}")
-        stream_message_to_ui(f"Updated {file_path} in branch {branch_name}")
+        stream_message_to_ui(f"Updated {file_path} in {branch_name} branch")
     except Exception as e:
         print(f"Error updating {file_path}: {e}")
 
@@ -185,7 +185,7 @@ def call_gemini(system_prompt: str, user_prompt: str,format :str) -> str:
    
     full_prompt = f"{system_prompt.strip()}\n\n{user_prompt.strip()}"
 
-    # print(full_prompt)
+    print(full_prompt)
 
     model = genai.GenerativeModel("gemini-1.5-flash")
 

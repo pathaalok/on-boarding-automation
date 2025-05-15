@@ -32,6 +32,7 @@
                 <th>Line Number</th>
                 <th>Existing RCC</th>
                 <th>Input RCC</th>
+                <th>Conflict Reason</th>
               </tr>
             </thead>
             <tbody>
@@ -40,12 +41,16 @@
                 <td>{{ validation.lineNumber }}</td>
                 <td>{{ validation.existingRcc }}</td>
                 <td>{{ validation.inputRcc }}</td>
+                <td>{{ validation.reasonForConflict }}</td>
               </tr>
             </tbody>
           </table>
       </div>
       <br>
-      <app-submit-questionare [questionareFormState]="questionareFormState" [questionare]="questionare"> </app-submit-questionare>
+      <app-submit-questionare [questionareFormState]="questionareFormState" [questionare]="questionare"
+      [flow]="'Verify'"
+      (formSubmit)="updateDataForVerification($event)"
+      > </app-submit-questionare>
 
     </mat-expansion-panel>
   </div>
