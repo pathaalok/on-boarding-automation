@@ -19,7 +19,7 @@ Angular UI
 Design :
 -
 
-![New_Design](https://github.com/user-attachments/assets/e1a57466-42df-4df3-a988-7ca100f0adc5)
+![Untitled Diagram drawio](https://github.com/user-attachments/assets/312a1574-82ac-4f59-b131-92a1472ebc8a)
 
 ----------------------------------------------------
 
