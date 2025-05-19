@@ -88,21 +88,13 @@ Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/35/fi
 DEMOS:
 -
 
-Design Video:
+Design & Application Video:
 -
 
 
-https://github.com/user-attachments/assets/6f8fd97e-207c-470f-990a-c2330c81309f
+https://github.com/user-attachments/assets/266e8512-c9e0-4fb0-b608-5bb3fb3b5270
 
 
-
-
-Application Video:
--
-
-
-
-https://github.com/user-attachments/assets/704e5d08-a79a-4a04-ad8f-e4fd9e33eedc
 
 
 
