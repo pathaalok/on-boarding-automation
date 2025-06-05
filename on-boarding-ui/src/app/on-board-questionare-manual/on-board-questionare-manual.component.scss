@@ -1,0 +1,24 @@
+.chat-window {
+    width: 95%;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: Arial;
+  }
+
+  
+  .row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .question-field {
+    flex: 1;
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  

@@ -1,0 +1,28 @@
+
+
+<div class="chat-window">
+  <div>
+    <h5>On-Boarding Form</h5>
+  </div>
+  <form class="questions-form" [formGroup]="formGroup">
+    <div class="row" *ngFor="let i of [].constructor(questions.length / 2); let rowIndex = index">
+      <div class="question-field" *ngFor="let colIndex of [0,1]">
+        <ng-container *ngIf="questions[rowIndex * 2 + colIndex] as question">
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>{{ question }}</mat-label>
+            <textarea matInput [formControlName]="'field' + (rowIndex * 2 + colIndex)" rows="3"></textarea>
+            <mat-error *ngIf="formGroup.get('field' + (rowIndex * 2 + colIndex))?.hasError('required')">
+              This field is required.
+            </mat-error>
+          </mat-form-field>
+        </ng-container>
+      </div>
+    </div>
+  
+    <button mat-raised-button color="primary" [disabled]="formGroup.invalid" (click)="onSubmit()">
+      Submit
+    </button>
+  </form>
+  
+    
+  </div>
