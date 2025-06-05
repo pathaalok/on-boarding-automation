@@ -19,7 +19,7 @@ Angular UI
 Design :
 -
 
-![New_Design](https://github.com/user-attachments/assets/e1a57466-42df-4df3-a988-7ca100f0adc5)
+![Untitled Diagram drawio](https://github.com/user-attachments/assets/312a1574-82ac-4f59-b131-92a1472ebc8a)
 
 ----------------------------------------------------
 
@@ -83,26 +83,18 @@ Submit Screen:
 On submission events will be displayed in real time:
 ![image](https://github.com/user-attachments/assets/0d0c5068-a4b3-4f10-ab12-2457fa33ca4e)
 
-Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/35/files
+Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/54/files
 
 DEMOS:
 -
 
-Design Video:
+Design & Application Video:
 -
 
 
-https://github.com/user-attachments/assets/6f8fd97e-207c-470f-990a-c2330c81309f
+https://github.com/user-attachments/assets/266e8512-c9e0-4fb0-b608-5bb3fb3b5270
 
 
-
-
-Application Video:
--
-
-
-
-https://github.com/user-attachments/assets/704e5d08-a79a-4a04-ad8f-e4fd9e33eedc
 
 
 
