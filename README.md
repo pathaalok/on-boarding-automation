@@ -18,8 +18,8 @@ Angular UI
 ---------------------------------------------------
 Design :
 -
+![UI_FLOW drawio](https://github.com/user-attachments/assets/c0d77b42-5b6f-41f1-8464-de5d6c556052)
 
-![Untitled Diagram drawio](https://github.com/user-attachments/assets/312a1574-82ac-4f59-b131-92a1472ebc8a)
 
 ----------------------------------------------------
 
