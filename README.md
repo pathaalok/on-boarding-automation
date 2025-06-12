@@ -85,7 +85,7 @@ Submit Screen:
 On submission events will be displayed in real time:
 ![image](https://github.com/user-attachments/assets/0d0c5068-a4b3-4f10-ab12-2457fa33ca4e)
 
-Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/54/files
+Sample PR created by Agent : https://github.com/pathaalok/config-repo/pull/56/files
 
 DEMOS:
 -
