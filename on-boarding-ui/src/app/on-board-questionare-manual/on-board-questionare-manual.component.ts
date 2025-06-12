@@ -23,6 +23,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./on-board-questionare-manual.component.scss'],
 })
 export class  OnBoardQuestionareManualComponent implements OnInit {
+
+  private _snackBar = inject(MatSnackBar);
   sessionId = '';
   messages: { role: string, text: string }[] = [];
   userInput = '';
@@ -75,10 +77,17 @@ export class  OnBoardQuestionareManualComponent implements OnInit {
   sendDataForVerification(){
     this.http.post<any>('http://localhost:8000/store_verify_qa', this.finalJson).subscribe(res => {
       this.confirmed = true;
+      this.openSnackBar("Updated successfully","");
+      this.formGroup.reset();
     });
   }
 
 
+  openSnackBar(message: string, action: string) {
+    this._snackBar.open(message,action,{
+      duration: 5000
+    });
+  }
 
 }
 
