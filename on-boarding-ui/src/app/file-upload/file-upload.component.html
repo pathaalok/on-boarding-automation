@@ -1,0 +1,151 @@
+<div class="file-upload-container">
+  <mat-card class="upload-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="title-icon">cloud_upload</mat-icon>
+        File Upload
+      </mat-card-title>
+      <mat-card-subtitle>
+        Upload multiple files by dragging and dropping or clicking the button below
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Drag and Drop Area -->
+      <div 
+        class="drop-zone"
+        [class.drag-over]="isDragOver"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <div class="drop-zone-content">
+          <mat-icon class="drop-icon">cloud_upload</mat-icon>
+          <h3>Drag & Drop Files Here</h3>
+          <p>or</p>
+          <button 
+            mat-raised-button 
+            color="primary" 
+            (click)="fileInput.click()"
+            class="upload-button"
+          >
+            <mat-icon>file_upload</mat-icon>
+            Choose Files
+          </button>
+          <input 
+            #fileInput
+            type="file" 
+            multiple 
+            (change)="onFileSelected($event)"
+            style="display: none;"
+            accept=".pdf"
+          >
+          <div class="file-info">
+            <p><strong>Supported formats:</strong> PDF </p>
+            <p><strong>Maximum file size:</strong> 10MB per file</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- File List -->
+      <div class="file-list" *ngIf="uploadedFiles.length > 0">
+        <div class="file-list-header">
+          <h3>Uploaded Files ({{ uploadedFiles.length }})</h3>
+          <div class="submit-section">
+            <button 
+              mat-raised-button 
+              color="accent" 
+              [disabled]="!canSubmit()"
+              (click)="submitFiles()"
+              class="submit-button"
+            >
+              <mat-icon>send</mat-icon>
+              Submit Files ({{ getCompletedFilesCount() }})
+            </button>
+          </div>
+        </div>
+        
+        <mat-list>
+          <mat-list-item *ngFor="let uploadedFile of uploadedFiles; let i = index" class="file-item">
+            <div class="file-item-content">
+              <div class="file-info">
+                <mat-icon class="file-icon" [class]="uploadedFile.status">
+                  {{ getFileIcon(uploadedFile.file.type) }}
+                </mat-icon>
+                <div class="file-details">
+                  <div class="file-name">{{ uploadedFile.file.name }}</div>
+                  <div class="file-meta">
+                    {{ formatFileSize(uploadedFile.file.size) }} • 
+                    <span class="status" [class]="uploadedFile.status">
+                      {{ uploadedFile.status | titlecase }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="file-actions">
+                <!-- Progress Bar -->
+                <mat-progress-bar 
+                  *ngIf="uploadedFile.status === 'uploading'"
+                  [value]="uploadedFile.progress"
+                  class="progress-bar"
+                ></mat-progress-bar>
+
+                <!-- Status Icons -->
+                <mat-icon 
+                  *ngIf="uploadedFile.status === 'completed'" 
+                  class="status-icon success"
+                >
+                  check_circle
+                </mat-icon>
+                <mat-icon 
+                  *ngIf="uploadedFile.status === 'error'" 
+                  class="status-icon error"
+                >
+                  error
+                </mat-icon>
+
+                <!-- Action Buttons -->
+                <button 
+                  mat-icon-button 
+                  *ngIf="uploadedFile.status === 'error'"
+                  (click)="retryUpload(uploadedFile)"
+                  matTooltip="Retry upload"
+                >
+                  <mat-icon>refresh</mat-icon>
+                </button>
+                <button 
+                  mat-icon-button 
+                  (click)="removeFile(i)"
+                  matTooltip="Remove file"
+                  class="remove-button"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </mat-list-item>
+        </mat-list>
+
+        <!-- Submit Progress -->
+        <div class="submit-progress" *ngIf="isSubmitting">
+          <div class="progress-header">
+            <h4>Submitting Files...</h4>
+            <span class="progress-text">{{ submitProgress }}%</span>
+          </div>
+          <mat-progress-bar 
+            [value]="submitProgress" 
+            class="submit-progress-bar"
+          ></mat-progress-bar>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="uploadedFiles.length === 0">
+        <mat-icon class="empty-icon">folder_open</mat-icon>
+        <p>No files uploaded yet</p>
+        <p class="empty-subtitle">Start by dragging files here or clicking the upload button</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div> 

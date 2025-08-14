@@ -1,0 +1,428 @@
+.file-upload-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.upload-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+mat-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin: -16px -16px 20px -16px;
+  padding: 20px;
+}
+
+.title-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+mat-card-title {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+mat-card-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+// Drop Zone Styles
+.drop-zone {
+  border: 2px dashed #e0e0e0;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #fafafa;
+  margin-bottom: 24px;
+
+  &.drag-over {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+    transform: scale(1.02);
+  }
+}
+
+.drop-zone-content {
+  .drop-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #667eea;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  p {
+    margin: 8px 0;
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.upload-button {
+  margin: 16px 0;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+}
+
+.file-info {
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+
+  p {
+    margin: 4px 0;
+    font-size: 12px;
+    color: #666;
+  }
+}
+
+// File List Styles
+.file-list {
+  margin-top: 24px;
+}
+
+.file-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: #667eea;
+      margin-right: 12px;
+      border-radius: 2px;
+    }
+  }
+}
+
+.submit-section {
+  display: flex;
+  align-items: center;
+}
+
+.submit-button {
+  padding: 12px 24px;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  min-width: 180px;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 64, 129, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.file-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  height: auto;
+  &:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  }
+}
+
+.file-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0px;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.file-icon {
+  margin-right: 12px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+
+  &.completed {
+    color: #4caf50;
+  }
+
+  &.uploading {
+    color: #ff9800;
+    animation: pulse 1.5s infinite;
+  }
+
+  &.error {
+    color: #f44336;
+  }
+
+  &.pending {
+    color: #9e9e9e;
+  }
+}
+
+.file-details {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+
+  &.completed {
+    background: #e8f5e8;
+    color: #2e7d32;
+  }
+
+  &.uploading {
+    background: #fff3e0;
+    color: #f57c00;
+  }
+
+  &.error {
+    background: #ffebee;
+    color: #c62828;
+  }
+
+  &.pending {
+    background: #f5f5f5;
+    color: #757575;
+  }
+}
+
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+}
+
+.progress-bar {
+  width: 100px;
+  margin-right: 8px;
+}
+
+.status-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+
+  &.success {
+    color: #4caf50;
+  }
+
+  &.error {
+    color: #f44336;
+  }
+}
+
+.remove-button {
+  color: #f44336;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(244, 67, 54, 0.1);
+    transform: scale(1.1);
+  }
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+
+  .empty-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 8px 0;
+    font-size: 16px;
+  }
+
+  .empty-subtitle {
+    font-size: 14px;
+    opacity: 0.7;
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .file-upload-container {
+    padding: 10px;
+  }
+
+  .drop-zone {
+    padding: 20px 10px;
+  }
+
+  .file-list-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+
+    h3 {
+      text-align: center;
+    }
+  }
+
+  .submit-button {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .file-item-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .file-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .progress-bar {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+}
+
+// Submit Progress Styles
+.submit-progress {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #ff4081;
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .progress-text {
+      font-weight: 600;
+      color: #ff4081;
+      font-size: 14px;
+    }
+  }
+
+  .submit-progress-bar {
+    height: 8px;
+    border-radius: 4px;
+  }
+}
+
+// Snackbar Customization
+::ng-deep {
+  .error-snackbar {
+    background: #f44336;
+    color: white;
+  }
+
+  .success-snackbar {
+    background: #4caf50;
+    color: white;
+  }
+} 
