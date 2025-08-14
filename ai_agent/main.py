@@ -1,17 +1,35 @@
 from dotenv import load_dotenv
 import os
-from fastapi import FastAPI,HTTPException
+from fastapi import FastAPI,HTTPException, UploadFile, File
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Optional
 from submit_on_boarding_service import run_langgraph, QAState,event_stream
 from fastapi.responses import StreamingResponse
+import aiohttp
+import asyncio
+import base64
 import google.generativeai as genai
 import uuid
 from submit_on_boarding_service import fetch_content,build_user_prompt,call_ai_model
 
 # Load environment variables
 load_dotenv()
+
+# API Configuration
+class APIConfig:
+    def __init__(self):
+        self.base_url = os.getenv("TARGET_API_BASE_URL", "https://api.example.com")
+        self.username = os.getenv("API_USERNAME", "default_user")
+        self.password = os.getenv("API_PASSWORD", "default_password")
+        self.endpoint = os.getenv("API_ENDPOINT", "/process-file")
+    
+    def get_auth_header(self):
+        credentials = f"{self.username}:{self.password}"
+        encoded_credentials = base64.b64encode(credentials.encode()).decode()
+        return f"Basic {encoded_credentials}"
+
+api_config = APIConfig()
 
 app = FastAPI()
 
@@ -338,3 +356,137 @@ def submit_qa(data: QAInput):
 def delete_submit_qa(session_id: str):
     del submit_qa_store[session_id]
     return submit_qa_store
+
+    
+# =================== File Upload =====================
+
+async def call_external_api(file_content: bytes, filename: str) -> Dict:
+    """
+    Call external API with basic auth for a single file
+    """
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Prepare the request data
+            data = aiohttp.FormData()
+            data.add_field('file', file_content, filename=filename)
+            
+            # Make the API call with basic auth
+            headers = {
+                'Authorization': api_config.get_auth_header(),
+                'Content-Type': 'multipart/form-data'
+            }
+            
+            url = f"{api_config.base_url}{api_config.endpoint}"
+            
+            async with session.post(url, data=data, headers=headers) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return {
+                        "filename": filename,
+                        "status": "success",
+                        "api_response": result
+                    }
+                else:
+                    error_text = await response.text()
+                    return {
+                        "filename": filename,
+                        "status": "error",
+                        "error": f"API returned status {response.status}: {error_text}"
+                    }
+                    
+    except Exception as e:
+        return {
+            "filename": filename,
+            "status": "error",
+            "error": f"Exception occurred: {str(e)}"
+        }
+
+@app.post("/upload-files")
+async def upload_files(files: List[UploadFile] = File(...)):
+    """
+    Accept multiple files uploaded from UI, call external API for each file in parallel,
+    and consolidate results
+    """
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided")
+    
+    # Read all files first
+    file_data = []
+    for file in files:
+        try:
+            content = await file.read()
+            file_data.append({
+                "content": content,
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "size": len(content)
+            })
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
+    
+    # Call external API for each file in parallel
+    tasks = []
+    for file_info in file_data:
+        task = call_external_api(file_info["content"], file_info["filename"])
+        tasks.append(task)
+    
+    # Wait for all API calls to complete
+    api_results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Process results and handle exceptions
+    processed_results = []
+    for i, result in enumerate(api_results):
+        if isinstance(result, Exception):
+            processed_results.append({
+                "filename": file_data[i]["filename"],
+                "status": "error",
+                "error": f"Task failed with exception: {str(result)}"
+            })
+        else:
+            processed_results.append(result)
+    
+    # Consolidate results
+    successful_files = [r for r in processed_results if r["status"] == "success"]
+    failed_files = [r for r in processed_results if r["status"] == "error"]
+    
+    consolidated_result = {
+        "message": f"Processed {len(files)} files",
+        "summary": {
+            "total_files": len(files),
+            "successful": len(successful_files),
+            "failed": len(failed_files)
+        },
+        "results": processed_results,
+        "successful_files": successful_files,
+        "failed_files": failed_files
+    }
+    
+    return consolidated_result
+
+@app.post("/upload-single-file")
+async def upload_single_file(file: UploadFile = File(...)):
+    """
+    Accept a single file uploaded from UI and call external API
+    """
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Call external API
+        api_result = await call_external_api(content, file.filename)
+        
+        # Prepare response
+        response = {
+            "message": "File processed",
+            "file_info": {
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "size": len(content)
+            },
+            "api_result": api_result
+        }
+        
+        return response
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error processing file {file.filename}: {str(e)}")
