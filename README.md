@@ -20,6 +20,10 @@ Design :
 -
 ![UI_FLOW drawio](https://github.com/user-attachments/assets/c0d77b42-5b6f-41f1-8464-de5d6c556052)
 
+NEW Design:
+
+![New_Flow drawio](https://github.com/user-attachments/assets/afd15b5d-d099-4cc9-823a-b8f52764dfd4)
+
 
 ----------------------------------------------------
 
