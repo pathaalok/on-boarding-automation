@@ -140,6 +140,113 @@
         </div>
       </div>
 
+      <!-- API Response Results -->
+      <div class="results-section" *ngIf="showResults && apiResponse">
+        <mat-card class="results-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="result-icon" [class]="apiResponse.summary.failed > 0 ? 'error' : 'success'">
+                {{ apiResponse.summary.failed > 0 ? 'error' : 'check_circle' }}
+              </mat-icon>
+              Submission Results
+            </mat-card-title>
+            <mat-card-subtitle>
+              {{ apiResponse.message }}
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <!-- Summary Information -->
+            <div class="summary-section">
+              <h4>Summary</h4>
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <span class="label">Total Files:</span>
+                  <span class="value">{{ apiResponse.summary.total_files }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Successful:</span>
+                  <span class="value success">{{ apiResponse.summary.successful }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">Failed:</span>
+                  <span class="value error">{{ apiResponse.summary.failed }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- File Details -->
+            <div class="file-details-section" *ngIf="apiResponse.results?.length">
+              <h4>File Details</h4>
+              <mat-list class="result-file-list">
+                <mat-list-item *ngFor="let file of apiResponse.results" class="result-file-item">
+                  <div class="result-file-content">
+                    <mat-icon class="file-status-icon" [class]="file.status">
+                      {{ file.status === 'success' ? 'check_circle' : 'error' }}
+                    </mat-icon>
+                    <div class="result-file-info">
+                      <div class="result-file-name">{{ file.fileName }}</div>
+                      <div class="result-file-meta">
+                        {{ formatFileSize(file.fileSize) }}
+                        <span class="file-id" *ngIf="file.fileId">• ID: {{ file.fileId }}</span>
+                      </div>
+                      <div class="file-status" [class]="file.status">
+                        {{ file.status | titlecase }}
+                      </div>
+                      <div class="file-error" *ngIf="file.error">
+                        <mat-icon class="error-icon">error</mat-icon>
+                        <span class="error-text">{{ file.error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </mat-list-item>
+              </mat-list>
+            </div>
+
+            <!-- Failed Files Section -->
+            <div class="failed-files-section" *ngIf="apiResponse.failed_files?.length">
+              <h4>Failed Files</h4>
+              <mat-list class="failed-files-list">
+                <mat-list-item *ngFor="let file of apiResponse.failed_files" class="failed-file-item">
+                  <div class="failed-file-content">
+                    <mat-icon class="error-icon">error</mat-icon>
+                    <div class="failed-file-info">
+                      <div class="failed-file-name">{{ file.fileName }}</div>
+                      <div class="failed-file-meta">
+                        {{ formatFileSize(file.fileSize) }}
+                      </div>
+                      <div class="failed-file-error" *ngIf="file.error">
+                        <span class="error-text">{{ file.error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </mat-list-item>
+              </mat-list>
+            </div>
+          </mat-card-content>
+
+          <mat-card-actions>
+            <button 
+              mat-raised-button 
+              color="primary" 
+              (click)="uploadNewFiles()"
+              class="upload-new-button"
+            >
+              <mat-icon>add</mat-icon>
+              Upload New Files
+            </button>
+            <button 
+              mat-button 
+              (click)="clearResults()"
+              class="clear-results-button"
+            >
+              <mat-icon>clear</mat-icon>
+              Clear Results
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
       <!-- Empty State -->
       <div class="empty-state" *ngIf="uploadedFiles.length === 0">
         <mat-icon class="empty-icon">folder_open</mat-icon>

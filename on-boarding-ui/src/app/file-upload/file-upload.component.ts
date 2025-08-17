@@ -18,6 +18,36 @@ interface UploadedFile {
   error?: string;
 }
 
+interface ApiResponse {
+  message: string;
+  summary: {
+    total_files: number;
+    successful: number;
+    failed: number;
+  };
+  results: Array<{
+    fileName: string;
+    fileSize: number;
+    status: string;
+    fileId?: string;
+    processingResult?: any;
+    error?: string;
+  }>;
+  successful_files: Array<{
+    fileName: string;
+    fileSize: number;
+    status: string;
+    fileId?: string;
+    processingResult?: any;
+  }>;
+  failed_files: Array<{
+    fileName: string;
+    fileSize: number;
+    status: string;
+    error?: string;
+  }>;
+}
+
 @Component({
   selector: 'app-file-upload',
   standalone: true,
@@ -46,6 +76,8 @@ export class FileUploadComponent implements OnInit {
 
   isSubmitting = false;
   submitProgress = 0;
+  apiResponse: ApiResponse | null = null;
+  showResults = false;
 
   constructor(
     private snackBar: MatSnackBar,
@@ -214,7 +246,13 @@ export class FileUploadComponent implements OnInit {
         } else if (event.type === HttpEventType.Response) {
           this.submitProgress = 100;
           this.isSubmitting = false;
-          this.showSuccess(`Successfully submitted ${completedFiles.length} files!`);
+          
+          // Handle API response
+          this.apiResponse = event.body as ApiResponse;
+          this.showResults = true;
+          
+          // Show success message with the response message
+          this.showSuccess(this.apiResponse?.message || `Successfully submitted ${completedFiles.length} files!`);
           
           // Clear the uploaded files after successful submission
           this.uploadedFiles = [];
@@ -237,5 +275,14 @@ export class FileUploadComponent implements OnInit {
 
   getCompletedFilesCount(): number {
     return this.uploadedFiles.filter(f => f.status === 'completed').length;
+  }
+
+  clearResults(): void {
+    this.apiResponse = null;
+    this.showResults = false;
+  }
+
+  uploadNewFiles(): void {
+    this.clearResults();
   }
 } 
