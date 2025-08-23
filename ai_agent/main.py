@@ -9,9 +9,11 @@ from fastapi.responses import StreamingResponse
 import aiohttp
 import asyncio
 import base64
+import json
 import google.generativeai as genai
 import uuid
 from submit_on_boarding_service import fetch_content,build_user_prompt,call_ai_model
+from supervisor_agent import run_workflow_step1, run_workflow_step2, store_workflow_state, get_workflow_state, delete_workflow_state
 
 # Load environment variables
 load_dotenv()
@@ -490,3 +492,145 @@ async def upload_single_file(file: UploadFile = File(...)):
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error processing file {file.filename}: {str(e)}")
+
+# =================== Supervisor Agent =====================
+
+class SupervisorInput(BaseModel):
+    workflow_id: str
+    ui_response: str
+
+class WorkflowProceedInput(BaseModel):
+    workflow_id: str
+    proceed: bool
+    qa_input: Optional[QAInput] = None
+
+@app.post("/supervisor-workflow/start")
+async def start_supervisor_workflow(files: List[UploadFile] = File(...)):
+    """
+    Start supervisor workflow: Upload files -> Agent 1 (API) -> Agent 2 (LLM) -> Wait for UI
+    """
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided")
+    
+    try:
+        # Generate workflow ID
+        workflow_id = str(uuid.uuid4())
+        
+        # Read all files first
+        file_data = []
+        for file in files:
+            try:
+                content = await file.read()
+                file_data.append({
+                    "content": content,
+                    "filename": file.filename,
+                    "content_type": file.content_type,
+                    "size": len(content)
+                })
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
+        
+        # Run workflow steps 1 and 2 (Agent 1 -> Agent 2)
+        workflow_result = run_workflow_step1(file_data, workflow_id)
+        
+        # Store workflow state for later use
+        store_workflow_state(workflow_id, workflow_result)
+        
+        return {
+            "workflow_id": workflow_id,
+            "status": "waiting_for_ui_confirmation",
+            "docClassificationAgent_result": workflow_result["docClassificationAgent_result"],
+            "rccClassificationAgent_result": workflow_result["rccClassificationAgent_result"],
+            "message": "Files processed by DocClassificationAgent (API) and RCCClassificationAgent (LLM). Awaiting UI confirmation to proceed to OnboardingAgent."
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Supervisor workflow failed: {str(e)}")
+
+@app.post("/supervisor-workflow/proceed")
+def proceed_supervisor_workflow(data: WorkflowProceedInput):
+    """
+    Proceed to Agent 3 after UI confirmation
+    """
+    try:
+        workflow_id = data.workflow_id
+        
+        # Get previous workflow state
+        previous_state = get_workflow_state(workflow_id)
+        if not previous_state:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        if not data.proceed:
+            # UI decided not to proceed
+            delete_workflow_state(workflow_id)
+            return {
+                "workflow_id": workflow_id,
+                "status": "cancelled",
+                "message": "Workflow cancelled by UI"
+            }
+        
+        # Prepare UI response with QAInput data
+        ui_response = "UI confirmed to proceed with processing"
+        qa_data = None
+        
+        if data.qa_input:
+            qa_data = data.qa_input
+            ui_response += f" with QAInput data: {qa_data.dict()}"
+        
+        # Run workflow step 3 (Agent 3)
+        final_result = run_workflow_step2(workflow_id, ui_response, previous_state, qa_data)
+        
+        # Clean up workflow state
+        delete_workflow_state(workflow_id)
+        
+        return {
+            "workflow_id": workflow_id,
+            "status": final_result["status"],
+            "docClassificationAgent_result": final_result["docClassificationAgent_result"],
+            "rccClassificationAgent_result": final_result["rccClassificationAgent_result"],
+            "onboardingAgent_result": final_result["onboardingAgent_result"],
+            "message": final_result["message"],
+            "branch_name": final_result.get("branch_name", ""),
+            "jira_no": final_result.get("jira_no", "")
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Workflow progression failed: {str(e)}")
+
+@app.get("/supervisor-workflow/status/{workflow_id}")
+def get_workflow_status(workflow_id: str):
+    """
+    Get current workflow status
+    """
+    try:
+        workflow_state = get_workflow_state(workflow_id)
+        if not workflow_state:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        return {
+            "workflow_id": workflow_id,
+            "status": workflow_state.get("status", "unknown"),
+            "current_step": workflow_state.get("current_step", "unknown"),
+            "docClassificationAgent_result": workflow_state.get("docClassificationAgent_result", {}),
+            "rccClassificationAgent_result": workflow_state.get("rccClassificationAgent_result", {}),
+            "onboardingAgent_result": workflow_state.get("onboardingAgent_result", {})
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get workflow status: {str(e)}")
+
+@app.delete("/supervisor-workflow/{workflow_id}")
+def cancel_workflow(workflow_id: str):
+    """
+    Cancel and clean up workflow
+    """
+    try:
+        delete_workflow_state(workflow_id)
+        return {
+            "workflow_id": workflow_id,
+            "status": "cancelled",
+            "message": "Workflow cancelled and cleaned up"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to cancel workflow: {str(e)}")
