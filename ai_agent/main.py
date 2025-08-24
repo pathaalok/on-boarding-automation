@@ -13,7 +13,7 @@ import json
 import google.generativeai as genai
 import uuid
 from submit_on_boarding_service import fetch_content,build_user_prompt,call_ai_model
-from supervisor_agent import run_workflow_step1_sync, run_workflow_step2, store_workflow_state, get_workflow_state, delete_workflow_state
+from supervisor_agent import run_workflow_step1_async, run_workflow_step2, store_workflow_state, get_workflow_state, delete_workflow_state
 
 # Load environment variables
 load_dotenv()
@@ -362,37 +362,39 @@ def delete_submit_qa(session_id: str):
     
 # =================== File Upload =====================
 
-def call_external_api(file_content: bytes, filename: str) -> Dict:
+async def call_external_api(file_content: bytes, filename: str) -> Dict:
     """
     Call external API with basic auth for a single file
     """
     try:
-        import requests
-        
-        # Prepare the request data
-        files = {'file': (filename, file_content)}
-        headers = {
-            'Authorization': api_config.get_auth_header()
-        }
-        
-        url = f"{api_config.base_url}{api_config.endpoint}"
-        
-        # Make the API call with basic auth
-        response = requests.post(url, files=files, headers=headers)
-        
-        if response.status_code == 200:
-            result = response.json()
-            return {
-                "filename": filename,
-                "status": "success",
-                "api_response": result
+        async with aiohttp.ClientSession() as session:
+            # Prepare the request data
+            data = aiohttp.FormData()
+            data.add_field('file', file_content, filename=filename)
+            
+            # Make the API call with basic auth
+            headers = {
+                'Authorization': api_config.get_auth_header(),
+                'Content-Type': 'multipart/form-data'
             }
-        else:
-            return {
-                "filename": filename,
-                "status": "error",
-                "error": f"API returned status {response.status_code}: {response.text}"
-            }
+            
+            url = f"{api_config.base_url}{api_config.endpoint}"
+            
+            async with session.post(url, data=data, headers=headers) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return {
+                        "filename": filename,
+                        "status": "success",
+                        "api_response": result
+                    }
+                else:
+                    error_text = await response.text()
+                    return {
+                        "filename": filename,
+                        "status": "error",
+                        "error": f"API returned status {response.status}: {error_text}"
+                    }
                     
     except Exception as e:
         return {
@@ -424,18 +426,14 @@ async def upload_files(files: List[UploadFile] = File(...)):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
     
-    # Call external API for each file
-    api_results = []
+    # Call external API for each file in parallel
+    tasks = []
     for file_info in file_data:
-        try:
-            result = call_external_api(file_info["content"], file_info["filename"])
-            api_results.append(result)
-        except Exception as e:
-            api_results.append({
-                "filename": file_info["filename"],
-                "status": "error",
-                "error": f"Task failed with exception: {str(e)}"
-            })
+        task = call_external_api(file_info["content"], file_info["filename"])
+        tasks.append(task)
+    
+    # Wait for all API calls to complete
+    api_results = await asyncio.gather(*tasks, return_exceptions=True)
     
     # Process results and handle exceptions
     processed_results = []
@@ -477,7 +475,7 @@ async def upload_single_file(file: UploadFile = File(...)):
         content = await file.read()
         
         # Call external API
-        api_result = call_external_api(content, file.filename)
+        api_result = await call_external_api(content, file.filename)
         
         # Prepare response
         response = {
@@ -533,7 +531,7 @@ async def start_supervisor_workflow(files: List[UploadFile] = File(...)):
                 raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
         
         # Run workflow steps 1 and 2 (Agent 1 -> Agent 2)
-        workflow_result = run_workflow_step1_sync(file_data, workflow_id)
+        workflow_result = await run_workflow_step1_async(file_data, workflow_id)
         
         # Store workflow state for later use
         store_workflow_state(workflow_id, workflow_result)

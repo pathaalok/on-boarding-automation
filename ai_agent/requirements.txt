@@ -13,4 +13,3 @@ uvicorn
 google-generativeai
 aiohttp
 python-multipart
-requests

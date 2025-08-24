@@ -9,7 +9,7 @@ import google.generativeai as genai
 import asyncio
 import json
 import uuid
-from doc_classification_agent import doc_classification_agent, doc_classification_agent_sync
+from doc_classification_agent import doc_classification_agent
 from rcc_classification_agent import rcc_classification_agent
 from submit_on_boarding_service import run_langgraph, QAState
 
@@ -64,19 +64,7 @@ async def doc_classification_agent_node(state: SupervisorState) -> SupervisorSta
     
     return state
 
-def doc_classification_agent_node_sync(state: SupervisorState) -> SupervisorState:
-    """Synchronous version of Document Classification Agent: Calls external API service to classify uploaded documents"""
-    
-    uploaded_files = state["uploaded_files"]
-    
-    # Call the synchronous wrapper of the document classification agent function
-    doc_classification_result = doc_classification_agent_sync(uploaded_files)
-    
-    state["docClassificationAgent_result"] = doc_classification_result
-    state["current_step"] = "rccClassificationAgent"
-    state["next_action"] = "rccClassificationAgent"
-    
-    return state
+
 
 # RCC Classification Agent: LLM Processing Agent
 def rcc_classification_agent_node(state: SupervisorState) -> SupervisorState:
@@ -308,7 +296,7 @@ def create_supervisor_workflow():
     workflow = StateGraph(SupervisorState)
     
     # Add nodes
-    workflow.add_node("docClassificationAgent", doc_classification_agent_node_sync)
+    workflow.add_node("docClassificationAgent", doc_classification_agent_node)
     workflow.add_node("rccClassificationAgent", rcc_classification_agent_node)
     workflow.add_node("onboardingAgent", submit_onboarding_agent_node)
     workflow.add_node("wait_for_ui", wait_for_ui)
@@ -385,8 +373,8 @@ async def run_workflow_step1(uploaded_files: List[Dict], workflow_id: str) -> Di
         "thread_id": workflow_id
     }
 
-def run_workflow_step1_sync(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
-    """Synchronous version of run_workflow_step1"""
+async def run_workflow_step1_async(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
+    """Async version of run_workflow_step1 that properly handles async nodes"""
     
     # Create initial state
     state = create_initial_state(uploaded_files, workflow_id)

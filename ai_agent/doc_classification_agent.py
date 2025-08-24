@@ -4,8 +4,6 @@ import os
 import aiohttp
 import asyncio
 import base64
-import requests
-from io import BytesIO
 
 # Load environment variables
 load_dotenv()
@@ -60,52 +58,6 @@ async def call_external_api(file_content: bytes, filename: str) -> Dict:
             "error": f"Exception occurred: {str(e)}"
         }
 
-def call_external_api_sync(file_content: bytes, filename: str) -> Dict:
-    """Synchronous version of call_external_api using requests"""
-    try:
-        # Get API configuration from environment
-        base_url = os.getenv("TARGET_API_BASE_URL", "https://api.example.com")
-        username = os.getenv("API_USERNAME", "default_user")
-        password = os.getenv("API_PASSWORD", "default_password")
-        endpoint = os.getenv("API_ENDPOINT", "/process-file")
-        
-        # Create auth header
-        credentials = f"{username}:{password}"
-        encoded_credentials = base64.b64encode(credentials.encode()).decode()
-        auth_header = f"Basic {encoded_credentials}"
-        
-        # Prepare the request data
-        files = {'file': (filename, file_content)}
-        headers = {
-            'Authorization': auth_header
-        }
-        
-        url = f"{base_url}{endpoint}"
-        
-        # Make the API call with basic auth
-        response = requests.post(url, files=files, headers=headers)
-        
-        if response.status_code == 200:
-            result = response.json()
-            return {
-                "filename": filename,
-                "status": "success",
-                "api_response": result
-            }
-        else:
-            return {
-                "filename": filename,
-                "status": "error",
-                "error": f"API returned status {response.status_code}: {response.text}"
-            }
-                    
-    except Exception as e:
-        return {
-            "filename": filename,
-            "status": "error",
-            "error": f"Exception occurred: {str(e)}"
-        }
-
 async def doc_classification_agent(uploaded_files: List[Dict]) -> Dict[str, Any]:
     """Document Classification Agent: Calls external API service to classify and process uploaded documents"""
     
@@ -129,33 +81,6 @@ async def doc_classification_agent(uploaded_files: List[Dict]) -> Dict[str, Any]
             })
         else:
             processed_results.append(result)
-    
-    # Consolidate results
-    successful_files = [r for r in processed_results if r["status"] == "success"]
-    failed_files = [r for r in processed_results if r["status"] == "error"]
-    
-    doc_classification_result = {
-        "message": f"Classified {len(uploaded_files)} documents",
-        "summary": {
-            "total_files": len(uploaded_files),
-            "successful": len(successful_files),
-            "failed": len(failed_files)
-        },
-        "results": processed_results,
-        "successful_files": successful_files,
-        "failed_files": failed_files
-    }
-    
-    return doc_classification_result
-
-def doc_classification_agent_sync(uploaded_files: List[Dict]) -> Dict[str, Any]:
-    """Synchronous version of doc_classification_agent using requests"""
-    
-    # Call external API for each file synchronously
-    processed_results = []
-    for file_info in uploaded_files:
-        result = call_external_api_sync(file_info["content"], file_info["filename"])
-        processed_results.append(result)
     
     # Consolidate results
     successful_files = [r for r in processed_results if r["status"] == "success"]
