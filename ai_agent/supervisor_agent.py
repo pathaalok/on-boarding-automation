@@ -9,7 +9,7 @@ import google.generativeai as genai
 import asyncio
 import json
 import uuid
-from doc_classification_agent import doc_classification_agent
+from doc_classification_agent import doc_classification_agent, doc_classification_agent_sync
 from rcc_classification_agent import rcc_classification_agent
 from submit_on_boarding_service import run_langgraph, QAState
 
@@ -50,13 +50,13 @@ def create_initial_state(uploaded_files: List[Dict], workflow_id: str) -> Superv
     }
 
 # Document Classification Agent: API Service Agent
-async def doc_classification_agent_node(state: SupervisorState) -> SupervisorState:
+def doc_classification_agent_node(state: SupervisorState) -> SupervisorState:
     """Document Classification Agent: Calls external API service to classify uploaded documents"""
     
     uploaded_files = state["uploaded_files"]
     
-    # Call the imported document classification agent function
-    doc_classification_result = await doc_classification_agent(uploaded_files)
+    # Use the synchronous wrapper that handles async calls safely
+    doc_classification_result = doc_classification_agent_sync(uploaded_files)
     
     state["docClassificationAgent_result"] = doc_classification_result
     state["current_step"] = "rccClassificationAgent"
@@ -349,8 +349,8 @@ def create_supervisor_workflow():
 # Workflow management functions
 
 
-async def run_workflow_step1_async(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
-    """Async version of run_workflow_step1 that properly handles async nodes"""
+def run_workflow_step1_sync(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
+    """Run workflow steps 1 and 2 (Agent 1 -> Agent 2) using LangGraph"""
     
     # Create initial state
     state = create_initial_state(uploaded_files, workflow_id)
@@ -372,31 +372,6 @@ async def run_workflow_step1_async(uploaded_files: List[Dict], workflow_id: str)
         "status": "waiting_for_ui_confirmation",
         "thread_id": workflow_id
     }
-
-def run_workflow_step1_sync(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
-    """Synchronous wrapper that handles async execution properly"""
-    
-    # Get the current event loop
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        # If no event loop is running, create a new one
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    
-    # Create a task for the async function
-    async def run_async_workflow():
-        return await run_workflow_step1_async(uploaded_files, workflow_id)
-    
-    # Run the async function in the current event loop
-    if loop.is_running():
-        # If we're already in an event loop, create a task
-        task = asyncio.create_task(run_async_workflow())
-        # Wait for the task to complete
-        return loop.run_until_complete(task)
-    else:
-        # If no event loop is running, run it directly
-        return loop.run_until_complete(run_async_workflow())
 
 def run_workflow_step2(workflow_id: str, ui_response: str, previous_state: Dict[str, Any], qa_data: Optional[Dict] = None) -> Dict[str, Any]:
     """Run workflow step 3 (Submit Onboarding Agent) after UI confirmation using LangGraph"""

@@ -4,6 +4,8 @@ import os
 import aiohttp
 import asyncio
 import base64
+import threading
+import concurrent.futures
 
 # Load environment variables
 load_dotenv()
@@ -98,4 +100,21 @@ async def doc_classification_agent(uploaded_files: List[Dict]) -> Dict[str, Any]
         "failed_files": failed_files
     }
     
-    return doc_classification_result 
+    return doc_classification_result
+
+def doc_classification_agent_sync(uploaded_files: List[Dict]) -> Dict[str, Any]:
+    """Synchronous wrapper for doc_classification_agent using threading"""
+    
+    def run_async_in_thread():
+        """Run the async function in a separate thread with its own event loop"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(doc_classification_agent(uploaded_files))
+        finally:
+            loop.close()
+    
+    # Use ThreadPoolExecutor to run the async function in a separate thread
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(run_async_in_thread)
+        return future.result() 
