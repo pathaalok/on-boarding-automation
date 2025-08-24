@@ -13,7 +13,7 @@ import json
 import google.generativeai as genai
 import uuid
 from submit_on_boarding_service import fetch_content,build_user_prompt,call_ai_model
-from supervisor_agent import run_workflow_step1_async, run_workflow_step2, store_workflow_state, get_workflow_state, delete_workflow_state
+from supervisor_agent import run_workflow_step1_sync, run_workflow_step2, store_workflow_state, get_workflow_state, delete_workflow_state
 
 # Load environment variables
 load_dotenv()
@@ -531,7 +531,7 @@ async def start_supervisor_workflow(files: List[UploadFile] = File(...)):
                 raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
         
         # Run workflow steps 1 and 2 (Agent 1 -> Agent 2)
-        workflow_result = await run_workflow_step1_async(file_data, workflow_id)
+        workflow_result = run_workflow_step1_sync(file_data, workflow_id)
         
         # Store workflow state for later use
         store_workflow_state(workflow_id, workflow_result)
