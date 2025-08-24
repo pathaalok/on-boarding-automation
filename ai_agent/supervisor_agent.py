@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, TypedDict, Annotated, Literal
+from typing import Dict, List, Any, TypedDict, Annotated, Literal, Optional
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
@@ -9,9 +9,9 @@ import google.generativeai as genai
 import asyncio
 import json
 import uuid
-from submit_on_boarding_service import run_langgraph, QAState
-from doc_classification_agent import doc_classification_agent
+from doc_classification_agent import doc_classification_agent, doc_classification_agent_sync
 from rcc_classification_agent import rcc_classification_agent
+from submit_on_boarding_service import run_langgraph, QAState
 
 # Load environment variables
 load_dotenv()
@@ -57,6 +57,20 @@ async def doc_classification_agent_node(state: SupervisorState) -> SupervisorSta
     
     # Call the imported document classification agent function
     doc_classification_result = await doc_classification_agent(uploaded_files)
+    
+    state["docClassificationAgent_result"] = doc_classification_result
+    state["current_step"] = "rccClassificationAgent"
+    state["next_action"] = "rccClassificationAgent"
+    
+    return state
+
+def doc_classification_agent_node_sync(state: SupervisorState) -> SupervisorState:
+    """Synchronous version of Document Classification Agent: Calls external API service to classify uploaded documents"""
+    
+    uploaded_files = state["uploaded_files"]
+    
+    # Call the synchronous wrapper of the document classification agent function
+    doc_classification_result = doc_classification_agent_sync(uploaded_files)
     
     state["docClassificationAgent_result"] = doc_classification_result
     state["current_step"] = "rccClassificationAgent"
@@ -294,7 +308,7 @@ def create_supervisor_workflow():
     workflow = StateGraph(SupervisorState)
     
     # Add nodes
-    workflow.add_node("docClassificationAgent", doc_classification_agent_node)
+    workflow.add_node("docClassificationAgent", doc_classification_agent_node_sync)
     workflow.add_node("rccClassificationAgent", rcc_classification_agent_node)
     workflow.add_node("onboardingAgent", submit_onboarding_agent_node)
     workflow.add_node("wait_for_ui", wait_for_ui)
@@ -347,7 +361,7 @@ def create_supervisor_workflow():
     return app
 
 # Workflow management functions
-def run_workflow_step1(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
+async def run_workflow_step1(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
     """Run workflow steps 1 and 2 (Agent 1 -> Agent 2) using LangGraph"""
     
     # Create initial state
@@ -370,6 +384,10 @@ def run_workflow_step1(uploaded_files: List[Dict], workflow_id: str) -> Dict[str
         "status": "waiting_for_ui_confirmation",
         "thread_id": workflow_id
     }
+
+def run_workflow_step1_sync(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
+    """Synchronous version of run_workflow_step1"""
+    return asyncio.run(run_workflow_step1(uploaded_files, workflow_id))
 
 def run_workflow_step2(workflow_id: str, ui_response: str, previous_state: Dict[str, Any], qa_data: Optional[Dict] = None) -> Dict[str, Any]:
     """Run workflow step 3 (Submit Onboarding Agent) after UI confirmation using LangGraph"""

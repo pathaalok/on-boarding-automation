@@ -98,4 +98,8 @@ async def doc_classification_agent(uploaded_files: List[Dict]) -> Dict[str, Any]
         "failed_files": failed_files
     }
     
-    return doc_classification_result 
+    return doc_classification_result
+
+def doc_classification_agent_sync(uploaded_files: List[Dict]) -> Dict[str, Any]:
+    """Synchronous wrapper for doc_classification_agent"""
+    return asyncio.run(doc_classification_agent(uploaded_files)) 
