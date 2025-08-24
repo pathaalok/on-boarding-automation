@@ -362,39 +362,37 @@ def delete_submit_qa(session_id: str):
     
 # =================== File Upload =====================
 
-async def call_external_api(file_content: bytes, filename: str) -> Dict:
+def call_external_api(file_content: bytes, filename: str) -> Dict:
     """
     Call external API with basic auth for a single file
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            # Prepare the request data
-            data = aiohttp.FormData()
-            data.add_field('file', file_content, filename=filename)
-            
-            # Make the API call with basic auth
-            headers = {
-                'Authorization': api_config.get_auth_header(),
-                'Content-Type': 'multipart/form-data'
+        import requests
+        
+        # Prepare the request data
+        files = {'file': (filename, file_content)}
+        headers = {
+            'Authorization': api_config.get_auth_header()
+        }
+        
+        url = f"{api_config.base_url}{api_config.endpoint}"
+        
+        # Make the API call with basic auth
+        response = requests.post(url, files=files, headers=headers)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return {
+                "filename": filename,
+                "status": "success",
+                "api_response": result
             }
-            
-            url = f"{api_config.base_url}{api_config.endpoint}"
-            
-            async with session.post(url, data=data, headers=headers) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    return {
-                        "filename": filename,
-                        "status": "success",
-                        "api_response": result
-                    }
-                else:
-                    error_text = await response.text()
-                    return {
-                        "filename": filename,
-                        "status": "error",
-                        "error": f"API returned status {response.status}: {error_text}"
-                    }
+        else:
+            return {
+                "filename": filename,
+                "status": "error",
+                "error": f"API returned status {response.status_code}: {response.text}"
+            }
                     
     except Exception as e:
         return {
@@ -426,14 +424,18 @@ async def upload_files(files: List[UploadFile] = File(...)):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
     
-    # Call external API for each file in parallel
-    tasks = []
+    # Call external API for each file
+    api_results = []
     for file_info in file_data:
-        task = call_external_api(file_info["content"], file_info["filename"])
-        tasks.append(task)
-    
-    # Wait for all API calls to complete
-    api_results = await asyncio.gather(*tasks, return_exceptions=True)
+        try:
+            result = call_external_api(file_info["content"], file_info["filename"])
+            api_results.append(result)
+        except Exception as e:
+            api_results.append({
+                "filename": file_info["filename"],
+                "status": "error",
+                "error": f"Task failed with exception: {str(e)}"
+            })
     
     # Process results and handle exceptions
     processed_results = []
@@ -475,7 +477,7 @@ async def upload_single_file(file: UploadFile = File(...)):
         content = await file.read()
         
         # Call external API
-        api_result = await call_external_api(content, file.filename)
+        api_result = call_external_api(content, file.filename)
         
         # Prepare response
         response = {

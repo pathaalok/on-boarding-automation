@@ -387,7 +387,27 @@ async def run_workflow_step1(uploaded_files: List[Dict], workflow_id: str) -> Di
 
 def run_workflow_step1_sync(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
     """Synchronous version of run_workflow_step1"""
-    return asyncio.run(run_workflow_step1(uploaded_files, workflow_id))
+    
+    # Create initial state
+    state = create_initial_state(uploaded_files, workflow_id)
+    
+    # Create and run the workflow
+    app = create_supervisor_workflow()
+    
+    # Run the workflow up to wait_for_ui
+    config = {"configurable": {"thread_id": workflow_id}}
+    
+    # Run the workflow
+    result = app.invoke(state, config=config)
+    
+    return {
+        "workflow_id": workflow_id,
+        "current_step": result["current_step"],
+        "docClassificationAgent_result": result["docClassificationAgent_result"],
+        "rccClassificationAgent_result": result["rccClassificationAgent_result"],
+        "status": "waiting_for_ui_confirmation",
+        "thread_id": workflow_id
+    }
 
 def run_workflow_step2(workflow_id: str, ui_response: str, previous_state: Dict[str, Any], qa_data: Optional[Dict] = None) -> Dict[str, Any]:
     """Run workflow step 3 (Submit Onboarding Agent) after UI confirmation using LangGraph"""
