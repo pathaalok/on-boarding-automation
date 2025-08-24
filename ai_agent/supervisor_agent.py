@@ -53,14 +53,24 @@ def create_initial_state(uploaded_files: List[Dict], workflow_id: str) -> Superv
 def doc_classification_agent_node(state: SupervisorState) -> SupervisorState:
     """Document Classification Agent: Calls external API service to classify uploaded documents"""
     
-    uploaded_files = state["uploaded_files"]
-    
-    # Use the synchronous wrapper that handles async calls safely
-    doc_classification_result = doc_classification_agent_sync(uploaded_files)
-    
-    state["docClassificationAgent_result"] = doc_classification_result
-    state["current_step"] = "rccClassificationAgent"
-    state["next_action"] = "rccClassificationAgent"
+    try:
+        uploaded_files = state["uploaded_files"]
+        
+        # Use the synchronous wrapper that handles async calls safely
+        doc_classification_result = doc_classification_agent_sync(uploaded_files)
+        
+        state["docClassificationAgent_result"] = doc_classification_result
+        state["current_step"] = "rccClassificationAgent"
+        state["next_action"] = "rccClassificationAgent"
+        
+    except Exception as e:
+        # Handle errors in document classification
+        state["docClassificationAgent_result"] = {
+            "error": f"Document classification failed: {str(e)}",
+            "status": "error"
+        }
+        state["current_step"] = "wait_for_ui"
+        state["next_action"] = "wait_for_ui"
     
     return state
 
@@ -68,14 +78,24 @@ def doc_classification_agent_node(state: SupervisorState) -> SupervisorState:
 def rcc_classification_agent_node(state: SupervisorState) -> SupervisorState:
     """RCC Classification Agent: Uses LLM to analyze document classification results and provide RCC insights"""
     
-    docClassificationAgent_result = state["docClassificationAgent_result"]
-    
-    # Call the imported RCC classification agent function
-    rcc_classification_result = rcc_classification_agent(docClassificationAgent_result)
-    
-    state["rccClassificationAgent_result"] = rcc_classification_result
-    state["current_step"] = "wait_for_ui"
-    state["next_action"] = "wait_for_ui"
+    try:
+        docClassificationAgent_result = state["docClassificationAgent_result"]
+        
+        # Call the imported RCC classification agent function
+        rcc_classification_result = rcc_classification_agent(docClassificationAgent_result)
+        
+        state["rccClassificationAgent_result"] = rcc_classification_result
+        state["current_step"] = "wait_for_ui"
+        state["next_action"] = "wait_for_ui"
+        
+    except Exception as e:
+        # Handle errors in RCC classification
+        state["rccClassificationAgent_result"] = {
+            "error": f"RCC classification failed: {str(e)}",
+            "status": "error"
+        }
+        state["current_step"] = "wait_for_ui"
+        state["next_action"] = "wait_for_ui"
     
     return state
 
@@ -284,6 +304,9 @@ def wait_for_ui(state: SupervisorState) -> SupervisorState:
     """Wait for UI response - this is a placeholder that maintains state"""
     # This function just maintains the state while waiting for UI
     # The actual UI interaction happens through the API endpoints
+    # Set the next action to end to stop the workflow
+    state["next_action"] = "end"
+    state["current_step"] = "wait_for_ui"
     return state
 
 # Create the LangGraph workflow
@@ -333,7 +356,6 @@ def create_supervisor_workflow():
         "wait_for_ui",
         route_workflow,
         {
-            "onboardingAgent": "onboardingAgent",
             "end": END
         }
     )
@@ -352,26 +374,46 @@ def create_supervisor_workflow():
 def run_workflow_step1_sync(uploaded_files: List[Dict], workflow_id: str) -> Dict[str, Any]:
     """Run workflow steps 1 and 2 (Agent 1 -> Agent 2) using LangGraph"""
     
-    # Create initial state
-    state = create_initial_state(uploaded_files, workflow_id)
-    
-    # Create and run the workflow
-    app = create_supervisor_workflow()
-    
-    # Run the workflow up to wait_for_ui
-    config = {"configurable": {"thread_id": workflow_id}}
-    
-    # Run the workflow
-    result = app.invoke(state, config=config)
-    
-    return {
-        "workflow_id": workflow_id,
-        "current_step": result["current_step"],
-        "docClassificationAgent_result": result["docClassificationAgent_result"],
-        "rccClassificationAgent_result": result["rccClassificationAgent_result"],
-        "status": "waiting_for_ui_confirmation",
-        "thread_id": workflow_id
-    }
+    try:
+        # Create initial state
+        state = create_initial_state(uploaded_files, workflow_id)
+        
+        # Create and run the workflow
+        app = create_supervisor_workflow()
+        
+        # Run the workflow up to wait_for_ui
+        config = {"configurable": {"thread_id": workflow_id}}
+        
+        # Run the workflow
+        result = app.invoke(state, config=config)
+        
+        # Ensure we have the required fields in the result
+        if "docClassificationAgent_result" not in result:
+            result["docClassificationAgent_result"] = {}
+        if "rccClassificationAgent_result" not in result:
+            result["rccClassificationAgent_result"] = {}
+        if "current_step" not in result:
+            result["current_step"] = "wait_for_ui"
+        
+        return {
+            "workflow_id": workflow_id,
+            "current_step": result["current_step"],
+            "docClassificationAgent_result": result["docClassificationAgent_result"],
+            "rccClassificationAgent_result": result["rccClassificationAgent_result"],
+            "status": "waiting_for_ui_confirmation",
+            "thread_id": workflow_id
+        }
+    except Exception as e:
+        # Return a structured error response
+        return {
+            "workflow_id": workflow_id,
+            "current_step": "error",
+            "docClassificationAgent_result": {},
+            "rccClassificationAgent_result": {},
+            "status": "error",
+            "error": str(e),
+            "thread_id": workflow_id
+        }
 
 def run_workflow_step2(workflow_id: str, ui_response: str, previous_state: Dict[str, Any], qa_data: Optional[Dict] = None) -> Dict[str, Any]:
     """Run workflow step 3 (Submit Onboarding Agent) after UI confirmation using LangGraph"""
