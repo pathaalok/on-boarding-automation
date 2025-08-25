@@ -389,6 +389,27 @@ mat-card-subtitle {
     gap: 8px;
   }
 
+  .filename-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+
+    .edit-button {
+      opacity: 1;
+      align-self: flex-end;
+    }
+  }
+
+  .filename-edit {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+
+    .edit-actions {
+      justify-content: flex-end;
+    }
+  }
+
   mat-card-actions {
     flex-direction: column;
     gap: 8px;
@@ -592,6 +613,86 @@ mat-card-subtitle {
   font-weight: 500;
   color: #333;
   margin-bottom: 4px;
+}
+
+.filename-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    flex: 1;
+    word-break: break-word;
+  }
+}
+
+.edit-button {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: #666;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+
+  &:hover {
+    color: #2196f3;
+    background: rgba(33, 150, 243, 0.1);
+  }
+}
+
+.result-file-item:hover .edit-button,
+.failed-file-item:hover .edit-button {
+  opacity: 1;
+}
+
+.filename-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filename-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #2196f3;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  background: white;
+  outline: none;
+
+  &:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  }
+}
+
+.edit-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.save-button {
+  color: #4caf50;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+
+  &:hover {
+    background: rgba(76, 175, 80, 0.1);
+  }
+}
+
+.cancel-button {
+  color: #f44336;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+
+  &:hover {
+    background: rgba(244, 67, 54, 0.1);
+  }
 }
 
 .result-file-meta {

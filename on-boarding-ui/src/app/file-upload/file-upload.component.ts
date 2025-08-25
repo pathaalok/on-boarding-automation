@@ -78,6 +78,8 @@ export class FileUploadComponent implements OnInit {
   submitProgress = 0;
   apiResponse: ApiResponse | null = null;
   showResults = false;
+  editingFileName: string | null = null;
+  editedFileName: string = '';
 
   constructor(
     private snackBar: MatSnackBar,
@@ -284,5 +286,27 @@ export class FileUploadComponent implements OnInit {
 
   uploadNewFiles(): void {
     this.clearResults();
+  }
+
+  startEditFileName(fileName: string): void {
+    this.editingFileName = fileName;
+    this.editedFileName = fileName;
+  }
+
+  saveFileName(file: any): void {
+    if (this.editedFileName.trim() && this.editedFileName !== file.fileName) {
+      file.fileName = this.editedFileName.trim();
+      this.showSuccess(`Filename updated to: ${this.editedFileName}`);
+    }
+    this.cancelEditFileName();
+  }
+
+  cancelEditFileName(): void {
+    this.editingFileName = null;
+    this.editedFileName = '';
+  }
+
+  isEditing(fileName: string): boolean {
+    return this.editingFileName === fileName;
   }
 } 

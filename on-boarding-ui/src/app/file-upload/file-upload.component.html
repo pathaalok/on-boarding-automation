@@ -185,7 +185,49 @@
                       {{ file.status === 'success' ? 'check_circle' : 'error' }}
                     </mat-icon>
                     <div class="result-file-info">
-                      <div class="result-file-name">{{ file.fileName }}</div>
+                      <!-- Filename with edit functionality -->
+                      <div class="result-file-name">
+                        <div *ngIf="!isEditing(file.fileName)" class="filename-display">
+                          <span>{{ file.fileName }}</span>
+                          <button 
+                            mat-icon-button 
+                            (click)="startEditFileName(file.fileName)"
+                            class="edit-button"
+                            matTooltip="Edit filename"
+                          >
+                            <mat-icon>edit</mat-icon>
+                          </button>
+                        </div>
+                        <div *ngIf="isEditing(file.fileName)" class="filename-edit">
+                          <input 
+                            type="text" 
+                            [(ngModel)]="editedFileName"
+                            class="filename-input"
+                            (keyup.enter)="saveFileName(file)"
+                            (keyup.escape)="cancelEditFileName()"
+                            #filenameInput
+                            autofocus
+                          >
+                          <div class="edit-actions">
+                            <button 
+                              mat-icon-button 
+                              (click)="saveFileName(file)"
+                              class="save-button"
+                              matTooltip="Save"
+                            >
+                              <mat-icon>check</mat-icon>
+                            </button>
+                            <button 
+                              mat-icon-button 
+                              (click)="cancelEditFileName()"
+                              class="cancel-button"
+                              matTooltip="Cancel"
+                            >
+                              <mat-icon>close</mat-icon>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                       <div class="result-file-meta">
                         {{ formatFileSize(file.fileSize) }}
                         <span class="file-id" *ngIf="file.fileId">• ID: {{ file.fileId }}</span>
@@ -211,7 +253,48 @@
                   <div class="failed-file-content">
                     <mat-icon class="error-icon">error</mat-icon>
                     <div class="failed-file-info">
-                      <div class="failed-file-name">{{ file.fileName }}</div>
+                      <!-- Filename with edit functionality -->
+                      <div class="failed-file-name">
+                        <div *ngIf="!isEditing(file.fileName)" class="filename-display">
+                          <span>{{ file.fileName }}</span>
+                          <button 
+                            mat-icon-button 
+                            (click)="startEditFileName(file.fileName)"
+                            class="edit-button"
+                            matTooltip="Edit filename"
+                          >
+                            <mat-icon>edit</mat-icon>
+                          </button>
+                        </div>
+                        <div *ngIf="isEditing(file.fileName)" class="filename-edit">
+                          <input 
+                            type="text" 
+                            [(ngModel)]="editedFileName"
+                            class="filename-input"
+                            (keyup.enter)="saveFileName(file)"
+                            (keyup.escape)="cancelEditFileName()"
+                            autofocus
+                          >
+                          <div class="edit-actions">
+                            <button 
+                              mat-icon-button 
+                              (click)="saveFileName(file)"
+                              class="save-button"
+                              matTooltip="Save"
+                            >
+                              <mat-icon>check</mat-icon>
+                            </button>
+                            <button 
+                              mat-icon-button 
+                              (click)="cancelEditFileName()"
+                              class="cancel-button"
+                              matTooltip="Cancel"
+                            >
+                              <mat-icon>close</mat-icon>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                       <div class="failed-file-meta">
                         {{ formatFileSize(file.fileSize) }}
                       </div>
