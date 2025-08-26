@@ -4,9 +4,11 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FileUploadComponent } from '../file-upload/file-upload.component';
 
 @Component({
   selector: 'app-on-board-questionare-manual',
@@ -17,7 +19,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    ReactiveFormsModule
+    MatIconModule,
+    ReactiveFormsModule,
+    FileUploadComponent
   ],
   templateUrl: './on-board-questionare-manual.component.html',
   styleUrls: ['./on-board-questionare-manual.component.scss'],
@@ -87,6 +91,17 @@ export class  OnBoardQuestionareManualComponent implements OnInit {
     this._snackBar.open(message,action,{
       duration: 5000
     });
+  }
+
+  // Side panel functionality
+  showSidePanel = false;
+
+  openSidePanel(): void {
+    this.showSidePanel = true;
+  }
+
+  closeSidePanel(): void {
+    this.showSidePanel = false;
   }
 
 }

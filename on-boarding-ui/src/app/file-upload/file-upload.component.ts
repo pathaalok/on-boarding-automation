@@ -309,4 +309,15 @@ export class FileUploadComponent implements OnInit {
   isEditing(fileName: string): boolean {
     return this.editingFileName === fileName;
   }
+
+  // Side panel functionality
+  showSidePanel = false;
+
+  openSidePanel(): void {
+    this.showSidePanel = true;
+  }
+
+  closeSidePanel(): void {
+    this.showSidePanel = false;
+  }
 } 

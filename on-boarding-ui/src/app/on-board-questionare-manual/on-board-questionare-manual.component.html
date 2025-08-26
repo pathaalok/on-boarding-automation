@@ -1,8 +1,16 @@
 
 
 <div class="chat-window">
-  <div>
+  <div class="header-section">
     <h5>On-Boarding Form</h5>
+    <button 
+      mat-icon-button 
+      (click)="openSidePanel()"
+      class="upload-button"
+      matTooltip="Upload Files"
+    >
+      <mat-icon>cloud_upload</mat-icon>
+    </button>
   </div>
   <form class="questions-form" [formGroup]="formGroup">
     <div class="row" *ngFor="let i of [].constructor(questions.length / 2); let rowIndex = index">
@@ -23,6 +31,23 @@
       Submit
     </button>
   </form>
-  
-    
+</div>
+
+<!-- Side Panel Overlay -->
+<div class="side-panel-overlay" *ngIf="showSidePanel" (click)="closeSidePanel()">
+  <div class="side-panel" (click)="$event.stopPropagation()">
+    <div class="side-panel-header">
+      <h3>File Upload</h3>
+      <button 
+        mat-icon-button 
+        (click)="closeSidePanel()"
+        class="close-button"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="side-panel-content">
+      <app-file-upload></app-file-upload>
+    </div>
   </div>
+</div>
