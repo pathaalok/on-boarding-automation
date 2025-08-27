@@ -9,6 +9,8 @@ import { MatListModule } from '@angular/material/list';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTableModule } from '@angular/material/table';
+import { MatSelectModule } from '@angular/material/select';
 import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
 
 interface UploadedFile {
@@ -16,6 +18,14 @@ interface UploadedFile {
   progress: number;
   status: 'pending' | 'uploading' | 'completed' | 'error';
   error?: string;
+  type?: 'Acct' | 'Deal';
+  country?: string;
+  acctSor?: string;
+  dealSor?: string;
+  acctLob?: string;
+  rccCode?: string;
+  existingRccCode?: string;
+  conflict?: boolean;
 }
 
 interface ApiResponse {
@@ -61,7 +71,9 @@ interface ApiResponse {
     MatListModule,
     MatChipsModule,
     MatSnackBarModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatTableModule,
+    MatSelectModule
   ],
   templateUrl: './file-upload.component.html',
   styleUrls: ['./file-upload.component.scss']
@@ -80,6 +92,9 @@ export class FileUploadComponent implements OnInit {
   showResults = false;
   editingFileName: string | null = null;
   editedFileName: string = '';
+  showFileTable = false;
+  expandedRows: Set<number> = new Set();
+  submissionCompleted = false;
 
   constructor(
     private snackBar: MatSnackBar,
@@ -124,7 +139,8 @@ export class FileUploadComponent implements OnInit {
         const uploadedFile: UploadedFile = {
           file,
           progress: 0,
-          status: 'pending'
+          status: 'pending',
+          country: 'US' // Set default country as US
         };
         this.uploadedFiles.push(uploadedFile);
         this.uploadFile(uploadedFile);
@@ -166,6 +182,11 @@ export class FileUploadComponent implements OnInit {
         uploadedFile.status = 'completed';
         clearInterval(interval);
         this.showSuccess(`File ${uploadedFile.file.name} uploaded successfully!`);
+        
+        // Show table after first file completes
+        if (!this.showFileTable) {
+          this.showFileTable = true;
+        }
       }
     }, 200);
   }
@@ -253,6 +274,15 @@ export class FileUploadComponent implements OnInit {
           this.apiResponse = event.body as ApiResponse;
           this.showResults = true;
           
+          // Update global submission status
+          this.submissionCompleted = true;
+          
+          // Update files with conflict status
+          completedFiles.forEach(file => {
+            // Simulate conflict detection - you can replace this with actual API response logic
+            file.conflict = Math.random() > 0.7; // 30% chance of conflict for demo
+          });
+          
           // Show success message with the response message
           this.showSuccess(this.apiResponse?.message || `Successfully submitted ${completedFiles.length} files!`);
           
@@ -282,6 +312,102 @@ export class FileUploadComponent implements OnInit {
   clearResults(): void {
     this.apiResponse = null;
     this.showResults = false;
+  }
+
+  // Table methods
+  getTypeOptions(): string[] {
+    return ['Acct', 'Deal'];
+  }
+
+  updateFileType(file: UploadedFile, type: string): void {
+    file.type = type as 'Acct' | 'Deal';
+  }
+
+  updateAcctSor(file: UploadedFile, value: string): void {
+    file.acctSor = value;
+  }
+
+  updateDealSor(file: UploadedFile, value: string): void {
+    file.dealSor = value;
+  }
+
+  updateAcctLob(file: UploadedFile, value: string): void {
+    file.acctLob = value;
+  }
+
+  updateRccCode(file: UploadedFile, value: string): void {
+    file.rccCode = value;
+  }
+
+  updateExistingRccCode(file: UploadedFile, value: string): void {
+    file.existingRccCode = value;
+  }
+
+  getCompletedFiles(): UploadedFile[] {
+    return this.uploadedFiles.filter(f => f.status === 'completed');
+  }
+
+  getTableData(): any[] {
+    const data: any[] = [];
+    this.getCompletedFiles().forEach((file, index) => {
+      // Add main row
+      data.push({
+        ...file,
+        index: index,
+        isExpanded: this.isRowExpanded(index)
+      });
+      
+      // Add expansion detail row if expanded
+      if (this.isRowExpanded(index)) {
+        data.push({
+          isExpansionDetailRow: true,
+          index: index,
+          ...this.getExpandedDetails(file)
+        });
+      }
+    });
+    return data;
+  }
+
+  getRowClass(file: UploadedFile): string {
+    if (this.submissionCompleted) {
+      return file.conflict ? 'conflict-row' : 'success-row';
+    }
+    return '';
+  }
+
+  isExpansionDetailRow = (index: number, item: any): boolean => {
+    return item.isExpansionDetailRow;
+  }
+
+  // Expansion methods
+  toggleRowExpansion(index: number): void {
+    if (this.expandedRows.has(index)) {
+      this.expandedRows.delete(index);
+    } else {
+      this.expandedRows.add(index);
+    }
+  }
+
+  isRowExpanded(index: number): boolean {
+    return this.expandedRows.has(index);
+  }
+
+  getExpandedDetails(file: UploadedFile): any {
+    return {
+      fileName: file.file.name,
+      fileSize: this.formatFileSize(file.file.size),
+      fileType: file.file.type,
+      lastModified: new Date(file.file.lastModified).toLocaleString(),
+      uploadTime: new Date().toLocaleString(),
+      type: file.type || 'Not set',
+      country: file.country || 'US',
+      acctSor: file.acctSor || 'Not set',
+      dealSor: file.dealSor || 'Not set',
+      acctLob: file.acctLob || 'Not set',
+      status: file.status,
+      progress: file.progress
+    };
   }
 
   uploadNewFiles(): void {

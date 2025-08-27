@@ -84,13 +84,6 @@
               </div>
 
               <div class="file-actions">
-                <!-- Progress Bar -->
-                <mat-progress-bar 
-                  *ngIf="uploadedFile.status === 'uploading'"
-                  [value]="uploadedFile.progress"
-                  class="progress-bar"
-                ></mat-progress-bar>
-
                 <!-- Status Icons -->
                 <mat-icon 
                   *ngIf="uploadedFile.status === 'completed'" 
@@ -138,6 +131,187 @@
             class="submit-progress-bar"
           ></mat-progress-bar>
         </div>
+      </div>
+
+      <!-- File Details Table -->
+      <div class="file-table-section" *ngIf="showFileTable && getCompletedFiles().length > 0">
+        <mat-card class="table-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="table-icon">table_chart</mat-icon>
+              File Details
+            </mat-card-title>
+            <mat-card-subtitle>
+              Configure file types and SOR codes for uploaded files
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <table mat-table [dataSource]="getTableData()" class="file-table">
+              <!-- File Name Column -->
+              <ng-container matColumnDef="fileName">
+                <th mat-header-cell *matHeaderCellDef>File Name</th>
+                <td mat-cell *matCellDef="let file">
+                  <div class="file-name-cell">
+                    <mat-icon class="file-icon">{{ getFileIcon(file.file.type) }}</mat-icon>
+                    <span>{{ file.file.name }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Country Column -->
+              <ng-container matColumnDef="country">
+                <th mat-header-cell *matHeaderCellDef>Country</th>
+                <td mat-cell *matCellDef="let file">
+                  <mat-form-field appearance="outline" class="country-input">
+                    <input matInput [value]="file.country || 'US'" disabled placeholder="US">
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Type Column -->
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let file">
+                  <mat-form-field appearance="outline" class="type-select">
+                    <mat-select [(value)]="file.type" (selectionChange)="updateFileType(file, $event.value)">
+                      <mat-option *ngFor="let option of getTypeOptions()" [value]="option">
+                        {{ option }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Acct SOR Column -->
+              <ng-container matColumnDef="acctSor">
+                <th mat-header-cell *matHeaderCellDef>Acct SOR</th>
+                <td mat-cell *matCellDef="let file">
+                  <mat-form-field appearance="outline" class="sor-input">
+                    <input matInput [(ngModel)]="file.acctSor" (input)="updateAcctSor(file, $event.target.value)" placeholder="Enter Acct SOR">
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Deal SOR Column -->
+              <ng-container matColumnDef="dealSor">
+                <th mat-header-cell *matHeaderCellDef>Deal SOR</th>
+                <td mat-cell *matCellDef="let file">
+                  <mat-form-field appearance="outline" class="sor-input">
+                    <input matInput [(ngModel)]="file.dealSor" (input)="updateDealSor(file, $event.target.value)" placeholder="Enter Deal SOR">
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Acct LOB Column -->
+              <ng-container matColumnDef="acctLob">
+                <th mat-header-cell *matHeaderCellDef>Acct LOB</th>
+                <td mat-cell *matCellDef="let file">
+                  <mat-form-field appearance="outline" class="lob-input">
+                    <input matInput [(ngModel)]="file.acctLob" (input)="updateAcctLob(file, $event.target.value)" placeholder="Enter Acct LOB">
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- RCC Code Column -->
+              <ng-container matColumnDef="rccCode">
+                <th mat-header-cell *matHeaderCellDef>RCC Code</th>
+                <td mat-cell *matCellDef="let file">
+                  <mat-form-field appearance="outline" class="rcc-input">
+                    <input matInput [(ngModel)]="file.rccCode" (input)="updateRccCode(file, $event.target.value)" placeholder="Enter RCC Code">
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Existing RCC Code Column -->
+              <ng-container matColumnDef="existingRccCode">
+                <th mat-header-cell *matHeaderCellDef>Existing RCC</th>
+                <td mat-cell *matCellDef="let file">
+                  <mat-form-field appearance="outline" class="rcc-input">
+                    <input matInput [(ngModel)]="file.existingRccCode" (input)="updateExistingRccCode(file, $event.target.value)" placeholder="Enter Existing RCC">
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let file">
+                  <div class="status-cell">
+                    <mat-icon class="status-icon" [class]="file.status">
+                      {{ file.status === 'completed' ? 'check_circle' : 'error' }}
+                    </mat-icon>
+                    <span class="status-text" [class]="file.status">{{ file.status | titlecase }}</span>
+                    <!-- Progress Bar -->
+                    <mat-progress-bar 
+                      *ngIf="file.status === 'uploading'"
+                      [value]="file.progress"
+                      class="progress-bar"
+                    ></mat-progress-bar>
+                    <!-- Conflict Indicator -->
+                    <div class="conflict-indicator" *ngIf="submissionCompleted && file.conflict">
+                      <mat-icon class="conflict-icon">warning</mat-icon>
+                      <span class="conflict-text">Conflict</span>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let file; let i = index">
+                  <div class="actions-cell">
+                    <button 
+                      mat-icon-button 
+                      (click)="toggleRowExpansion(i)"
+                      matTooltip="View details"
+                      class="expand-button"
+                      [class.expanded]="isRowExpanded(i)"
+                    >
+                      <mat-icon>{{ isRowExpanded(i) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                    </button>
+                    <button 
+                      mat-icon-button 
+                      (click)="removeFile(i)"
+                      matTooltip="Remove file"
+                      class="remove-button"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                    <button 
+                      mat-icon-button 
+                      *ngIf="file.status === 'error'"
+                      (click)="retryUpload(file)"
+                      matTooltip="Retry upload"
+                    >
+                      <mat-icon>refresh</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Expanded Detail Row -->
+              <ng-container matColumnDef="expandedDetail">
+                <td mat-cell *matCellDef="let detail" [attr.colspan]="8">
+                  <div class="expanded-detail" *ngIf="isRowExpanded(detail.index)">
+                    <div class="detail-header">
+                      <h4>File Details</h4>
+                      <span class="detail-subtitle">Comprehensive information about {{ detail.fileName }}</span>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['fileName', 'country', 'type', 'acctSor', 'dealSor', 'acctLob', 'rccCode', 'existingRccCode', 'status', 'actions']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['fileName', 'country', 'type', 'acctSor', 'dealSor', 'acctLob', 'rccCode', 'existingRccCode', 'status', 'actions'];" 
+                  [class.expanded-row]="row.isExpanded"
+                  [class]="getRowClass(row)"></tr>
+              <tr mat-row *matRowDef="let row; when: isExpansionDetailRow" 
+                  [class.expansion-detail-row]="true"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
       </div>
 
       <!-- API Response Results -->
