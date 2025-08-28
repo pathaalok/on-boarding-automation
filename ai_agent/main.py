@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from fastapi import FastAPI,HTTPException, UploadFile, File
+from fastapi import FastAPI,HTTPException, UploadFile, File, Form, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Optional
@@ -403,67 +403,159 @@ async def call_external_api(file_content: bytes, filename: str) -> Dict:
             "error": f"Exception occurred: {str(e)}"
         }
 
-@app.post("/upload-files")
-async def upload_files(files: List[UploadFile] = File(...)):
+async def call_external_api_with_metadata(file_content: bytes, filename: str, country: str = "US", acct_sor: str = "") -> Dict:
     """
-    Accept multiple files uploaded from UI, call external API for each file in parallel,
+    Call external API with basic auth for a single file, including metadata
+    """
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Prepare the request data with metadata
+            data = aiohttp.FormData()
+            data.add_field('file', file_content, filename=filename)
+            data.add_field('country', country)
+            data.add_field('acct_sor', acct_sor)
+            
+            # Make the API call with basic auth
+            headers = {
+                'Authorization': api_config.get_auth_header(),
+                'Content-Type': 'multipart/form-data'
+            }
+            
+            url = f"{api_config.base_url}{api_config.endpoint}"
+            
+            async with session.post(url, data=data, headers=headers) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return {
+                        "filename": filename,
+                        "status": "success",
+                        "api_response": result,
+                        "metadata": {
+                            "country": country,
+                            "acct_sor": acct_sor
+                        }
+                    }
+                else:
+                    error_text = await response.text()
+                    return {
+                        "filename": filename,
+                        "status": "error",
+                        "error": f"API returned status {response.status}: {error_text}",
+                        "metadata": {
+                            "country": country,
+                            "acct_sor": acct_sor
+                        }
+                    }
+                    
+    except Exception as e:
+        return {
+            "filename": filename,
+            "status": "error",
+            "error": f"Exception occurred: {str(e)}",
+            "metadata": {
+                "country": country,
+                "acct_sor": acct_sor
+            }
+        }
+
+@app.post("/upload-files")
+async def upload_files(request: Request):
+    """
+    Accept multiple files uploaded from UI with metadata, call external API for each file in parallel,
     and consolidate results
     """
-    if not files:
-        raise HTTPException(status_code=400, detail="No files provided")
-    
-    # Read all files first
-    file_data = []
-    for file in files:
-        try:
-            content = await file.read()
-            file_data.append({
-                "content": content,
-                "filename": file.filename,
-                "content_type": file.content_type,
-                "size": len(content)
-            })
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
-    
-    # Call external API for each file in parallel
-    tasks = []
-    for file_info in file_data:
-        task = call_external_api(file_info["content"], file_info["filename"])
-        tasks.append(task)
-    
-    # Wait for all API calls to complete
-    api_results = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    # Process results and handle exceptions
-    processed_results = []
-    for i, result in enumerate(api_results):
-        if isinstance(result, Exception):
-            processed_results.append({
-                "filename": file_data[i]["filename"],
-                "status": "error",
-                "error": f"Task failed with exception: {str(result)}"
-            })
-        else:
-            processed_results.append(result)
-    
-    # Consolidate results
-    successful_files = [r for r in processed_results if r["status"] == "success"]
-    failed_files = [r for r in processed_results if r["status"] == "error"]
-    
-    consolidated_result = {
-        "message": f"Processed {len(files)} files",
-        "summary": {
-            "total_files": len(files),
-            "successful": len(successful_files),
-            "failed": len(failed_files)
-        },
-        "results": processed_results,
-        "successful_files": successful_files,
-        "failed_files": failed_files
-    }
-    
-    return consolidated_result
+    try:
+        # Parse the multipart form data
+        form_data = await request.form()
+        
+        # Extract files and metadata
+        files = []
+        metadata = {}
+        
+        for key, value in form_data.items():
+            if key.startswith('file') and not key.endswith(('_country', '_acctSor')):
+                # This is a file
+                if isinstance(value, UploadFile):
+                    files.append(value)
+            elif key in ['totalFiles', 'uploadTimestamp']:
+                # Global metadata
+                metadata[key] = value
+            elif key.endswith('_country') or key.endswith('_acctSor'):
+                # File-level metadata
+                metadata[key] = value
+        
+        if not files:
+            raise HTTPException(status_code=400, detail="No files provided")
+        
+        # Read all files and associate with metadata
+        file_data = []
+        for i, file in enumerate(files):
+            try:
+                content = await file.read()
+                
+                # Extract file-specific metadata
+                country = metadata.get(f'file{i}_country', 'US')
+                acct_sor = metadata.get(f'file{i}_acctSor', '')
+                
+                file_data.append({
+                    "content": content,
+                    "filename": file.filename,
+                    "content_type": file.content_type,
+                    "size": len(content),
+                    "index": i,
+                    "country": country,
+                    "acct_sor": acct_sor
+                })
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
+        
+        # Call external API for each file in parallel
+        tasks = []
+        for file_info in file_data:
+            task = call_external_api_with_metadata(
+                file_info["content"], 
+                file_info["filename"],
+                file_info["country"],
+                file_info["acct_sor"]
+            )
+            tasks.append(task)
+        
+        # Wait for all API calls to complete
+        api_results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Process results and handle exceptions
+        processed_results = []
+        for i, result in enumerate(api_results):
+            if isinstance(result, Exception):
+                processed_results.append({
+                    "filename": file_data[i]["filename"],
+                    "status": "error",
+                    "error": f"Task failed with exception: {str(result)}"
+                })
+            else:
+                processed_results.append(result)
+        
+        # Consolidate results
+        successful_files = [r for r in processed_results if r["status"] == "success"]
+        failed_files = [r for r in processed_results if r["status"] == "error"]
+        
+        consolidated_result = {
+            "message": f"Processed {len(files)} files with metadata",
+            "summary": {
+                "total_files": len(files),
+                "successful": len(successful_files),
+                "failed": len(failed_files)
+            },
+            "results": processed_results,
+            "successful_files": successful_files,
+            "failed_files": failed_files,
+            "metadata": metadata
+        }
+        
+        return consolidated_result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing upload: {str(e)}")
 
 @app.post("/upload-single-file")
 async def upload_single_file(file: UploadFile = File(...)):

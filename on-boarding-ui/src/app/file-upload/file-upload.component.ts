@@ -252,6 +252,10 @@ export class FileUploadComponent implements OnInit {
     const formData = new FormData();
     completedFiles.forEach((uploadedFile, index) => {
       formData.append(`file${index}`, uploadedFile.file);
+      
+      // Add only country and acctSor at file level
+      formData.append(`file${index}_country`, uploadedFile.country || 'US');
+      formData.append(`file${index}_acctSor`, uploadedFile.acctSor || '');
     });
 
     // Add metadata
