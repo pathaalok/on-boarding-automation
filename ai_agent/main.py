@@ -597,27 +597,53 @@ class WorkflowProceedInput(BaseModel):
     qa_input: Optional[QAInput] = None
 
 @app.post("/supervisor-workflow/start")
-async def start_supervisor_workflow(files: List[UploadFile] = File(...)):
+async def start_supervisor_workflow(request: Request):
     """
     Start supervisor workflow: Upload files -> Agent 1 (API) -> Agent 2 (LLM) -> Wait for UI
     """
-    if not files:
-        raise HTTPException(status_code=400, detail="No files provided")
-    
     try:
+        # Parse the multipart form data
+        form_data = await request.form()
+        
+        # Extract files and metadata
+        files = []
+        metadata = {}
+        
+        for key, value in form_data.items():
+            if key.startswith('file') and not key.endswith(('_country', '_acctSor')):
+                # This is a file
+                if isinstance(value, UploadFile):
+                    files.append(value)
+            elif key in ['totalFiles', 'uploadTimestamp']:
+                # Global metadata
+                metadata[key] = value
+            elif key.endswith('_country') or key.endswith('_acctSor'):
+                # File-level metadata
+                metadata[key] = value
+        
+        if not files:
+            raise HTTPException(status_code=400, detail="No files provided")
+        
         # Generate workflow ID
         workflow_id = str(uuid.uuid4())
         
-        # Read all files first
+        # Read all files and associate with metadata
         file_data = []
-        for file in files:
+        for i, file in enumerate(files):
             try:
                 content = await file.read()
+                
+                # Extract file-specific metadata
+                country = metadata.get(f'file{i}_country', 'US')
+                acct_sor = metadata.get(f'file{i}_acctSor', '')
+                
                 file_data.append({
                     "content": content,
                     "filename": file.filename,
                     "content_type": file.content_type,
-                    "size": len(content)
+                    "size": len(content),
+                    "country": country,
+                    "acct_sor": acct_sor
                 })
             except Exception as e:
                 raise HTTPException(status_code=400, detail=f"Error reading file {file.filename}: {str(e)}")
@@ -633,7 +659,8 @@ async def start_supervisor_workflow(files: List[UploadFile] = File(...)):
             "status": "waiting_for_ui_confirmation",
             "docClassificationAgent_result": workflow_result["docClassificationAgent_result"],
             "rccClassificationAgent_result": workflow_result["rccClassificationAgent_result"],
-            "message": "Files processed by DocClassificationAgent (API) and RCCClassificationAgent (LLM). Awaiting UI confirmation to proceed to OnboardingAgent."
+            "message": "Files processed by DocClassificationAgent (API) and RCCClassificationAgent (LLM). Awaiting UI confirmation to proceed to OnboardingAgent.",
+            "metadata": metadata
         }
         
     except Exception as e:
